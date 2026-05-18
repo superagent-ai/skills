@@ -4,8 +4,6 @@ A collection of agent skills for AI coding agents. Skills are packaged instructi
 
 Skills follow the [Agent Skills](https://agentskills.io/) format.
 
-[![skills.sh](https://skills.sh/b/superagent-ai/skills)](https://skills.sh/superagent-ai/skills)
-
 ## Available Skills
 
 ### ci-cd-security
