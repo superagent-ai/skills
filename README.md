@@ -1,99 +1,88 @@
-# Agent Skills
+# Security Skills
 
-A collection of agent skills for AI coding agents. Skills are packaged instructions that extend agent capabilities.
+Security skills for AI coding agents — distilled from real security work on codebases that serve 100M+ users a week.
 
-Skills follow the [Agent Skills](https://agentskills.io/) format.
+Each skill ships in the open [Agent Skills](https://agentskills.io/) format and loads automatically when the agent hits a relevant task. They turn the model itself into the auditor: encoded rules and offline scanners, not another service to wire up.
 
-## Available Skills
+## Skills
 
-### ci-cd-security
+| Skill | Audits | Engine |
+|---|---|---|
+| [`ci-cd-security`](skills/ci-cd-security) | GitHub Actions workflows | Model reads the YAML against an encoded rule set — nothing to install |
+| [`skill-security`](skills/skill-security) | AI agent skills, before you trust them | Offline scanner (AST + taint + YARA) + model judgment |
 
-Scan GitHub Actions workflow YAML for supply-chain and pwn-request vulnerabilities. Reads workflow files directly and reports findings with severity ratings and concrete fixes — no external tools required.
+<details>
+<summary><b>ci-cd-security</b> — supply-chain and pwn-request bugs in GitHub Actions</summary>
 
-**Use when:**
+Use it when you're reviewing `.github/workflows/`, hardening a release pipeline, or chasing `pull_request_target`, template injection, action pinning, or cache poisoning.
 
-- Reviewing `.github/workflows/` files in a PR
-- Auditing CI/CD security posture
-- Checking for `pull_request_target`, template injection, or cache poisoning
-- Hardening release/publish workflows
+Every finding comes with a severity (P0–P3) and a concrete rewrite. It catches:
 
-**Covers:**
-
-- Dangerous triggers (`pull_request_target`, `workflow_run`)
-- `GITHUB_TOKEN` permissions and least privilege
-- Action pinning (SHA vs tag vs branch)
+- Dangerous triggers — `pull_request_target`, `workflow_run`
+- Over-broad `GITHUB_TOKEN` permissions
+- Mutable action pins (tags/branches instead of a SHA)
 - Shell/template injection in `run:` blocks
 - Untrusted checkout, cache poisoning, artifact-borne injection
-- Release hardening and self-hosted runner risks
+- Release hardening (OIDC, environments, provenance) and self-hosted runner risk
 
-### skill-security
+Rules track the consensus from Astral, OpenSSF, GitHub Security Lab, Chainguard, and zizmor — without running any of them.
 
-Audit an AI agent skill for security risks before installing or trusting it. Runs a deterministic scanner (regex patterns, Python AST analysis, source-to-sink taint tracking, and YARA signatures) and then reasons about intent — catching what static analysis alone misses.
+```
+Review this GitHub Actions workflow for security issues
+Check .github/workflows/ci.yml for pull_request_target vulnerabilities
+Audit our release workflow for cache poisoning risks
+```
 
-**Use when:**
+</details>
 
-- Vetting a skill, plugin, `SKILL.md`, or agent tool before installing it
-- Answering "is this skill safe to install?"
-- Scanning a local folder, a `.zip`/`.skill` archive, or a cloned repo
-- Reviewing a skill for prompt injection, credential theft, or malicious code
+<details>
+<summary><b>skill-security</b> — answer "is this skill safe to install?"</summary>
 
-**Covers:**
+Use it before you install or trust a skill, plugin, `SKILL.md`, or agent tool — a local folder, a `.zip`/`.skill`, or a cloned repo.
+
+It runs in two stages. First, a deterministic, offline scanner (`scripts/scan.py` — regex, Python AST, source-to-sink taint tracking, YARA signatures) does the high-recall pass and scores the skill 0–100. Then the model judges intent and runs the contract check: does what the skill *claims* to do match what its code *actually* does? It catches:
 
 - Prompt injection and audit-manipulation attempts
 - Credential/secret exfiltration and outbound data theft
 - Persistence and agent-memory poisoning
-- Malicious code, webshells, and cryptominers (YARA signatures)
-- Supply-chain and dependency risks
-- Description-vs-behavior contract mismatch
+- Malicious code, webshells, cryptominers (YARA)
+- Supply-chain and dependency risk
+- Description-vs-behavior mismatch
 
-## Installation
-
-```bash
-npx skills add superagent-ai/skills
+```
+Is this skill safe to install? ~/Downloads/some-skill.zip
+Audit ./vendor/skill-foo/SKILL.md for prompt injection or credential theft
 ```
 
-Install a specific skill:
+</details>
+
+## Install
 
 ```bash
+# everything
+npx skills add superagent-ai/skills
+
+# or pick one
 npx skills add superagent-ai/skills --skill ci-cd-security -a cursor -y
 npx skills add superagent-ai/skills --skill skill-security -a cursor -y
 ```
 
-## Usage
+Once installed, skills load on their own when a task matches — nothing to remember or invoke by hand.
 
-Skills are automatically available once installed. The agent will use them when relevant tasks are detected.
-
-**Examples:**
+## Repo layout
 
 ```
-Review this GitHub Actions workflow for security issues
+skills/
+  ci-cd-security/    SKILL.md + references/
+  skill-security/    SKILL.md + scripts/ (scanner) + rules/ (YARA) + references/
 ```
 
-```
-Check .github/workflows/ci.yml for pull_request_target vulnerabilities
-```
+A skill is a `SKILL.md` (the agent's instructions) plus optional `references/`, `scripts/`, and `rules/`.
 
-```
-Audit our release workflow for cache poisoning risks
-```
+## Contributing
 
-```
-Is this skill safe to install? ~/Downloads/some-skill.zip
-```
-
-```
-Audit ./vendor/skill-foo/SKILL.md for prompt injection or credential theft
-```
-
-## Skill Structure
-
-Each skill contains:
-
-- `SKILL.md` — Instructions for the agent
-- `references/` — Supporting documentation (optional)
-- `scripts/` — Executable helpers the agent can run (optional)
-- `rules/` — Detection signatures, e.g. YARA rules (optional)
+New skills and rule improvements are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). The bar is a real security problem the model gets wrong by default, encoded as durable rules that run offline.
 
 ## License
 
-MIT
+Released under the [MIT License](LICENSE).
