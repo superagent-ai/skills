@@ -6,13 +6,8 @@ Each skill ships in the open [Agent Skills](https://agentskills.io/) format and 
 
 ## Skills
 
-| Skill | Audits | Engine |
-|---|---|---|
-| [`ci-cd-security`](skills/ci-cd-security) | GitHub Actions workflows | Model reads the YAML against an encoded rule set — nothing to install |
-| [`skill-security`](skills/skill-security) | AI agent skills, before you trust them | Offline scanner (AST + taint + YARA) + model judgment |
-
 <details>
-<summary><b>ci-cd-security</b> — supply-chain and pwn-request bugs in GitHub Actions</summary>
+<summary><b>ci-cd-security</b>: supply-chain and pwn-request bugs in GitHub Actions</summary>
 
 Use it when you're reviewing `.github/workflows/`, hardening a release pipeline, or chasing `pull_request_target`, template injection, action pinning, or cache poisoning.
 
@@ -36,7 +31,7 @@ Audit our release workflow for cache poisoning risks
 </details>
 
 <details>
-<summary><b>skill-security</b> — answer "is this skill safe to install?"</summary>
+<summary><b>skill-security</b>: answer "is this skill safe to install?"</summary>
 
 Use it before you install or trust a skill, plugin, `SKILL.md`, or agent tool — a local folder, a `.zip`/`.skill`, or a cloned repo.
 
