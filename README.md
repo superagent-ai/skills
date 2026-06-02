@@ -74,6 +74,29 @@ Audit our multi-tenant API for BOLA and missing authorization
 
 </details>
 
+<details>
+<summary><b>supply-chain-security</b>: malicious or compromised dependencies before they land</summary>
+
+Use it when you're adding or upgrading a dependency, reviewing a PR that changes `package.json`, `requirements.txt`, `go.mod`, or a lockfile, or deciding whether a package is safe to install — anywhere you need to answer "is this dependency safe to add?"
+
+It reads your manifests, lockfiles, install scripts, and dependency diffs offline — across npm/pnpm/yarn, PyPI, Go, Cargo, RubyGems, Maven/Gradle, NuGet, and Composer — and reports each risk at `file:line` with a concrete fix. No install, no execution, no phoning home. Every finding comes with a severity (P0–P3). It catches:
+
+- Malicious install scripts — `preinstall`/`postinstall` hooks that harvest and exfiltrate secrets (the Shai-Hulud and nx `s1ngularity` worm pattern)
+- Obfuscated payloads, credential harvesting, exfiltration, persistence, and worm self-propagation
+- Typosquatting and slopsquatting (AI-hallucinated package names) of real dependencies
+- Dependency / namespace confusion — unscoped internal names a public registry can hijack
+- Maintainer account takeover, and version hygiene gaps (floating ranges, missing lockfile/integrity, no cooldown or provenance)
+
+Rules track the consensus from OpenSSF, OSV, Socket, Datadog, and the 2025 npm worm post-mortems — applied as a pre-install source read, the defensive complement to a continuous SCA scanner.
+
+```
+Is this dependency safe to add?
+Review this PR's package.json and lockfile changes for supply-chain risks
+Check this package's postinstall script for Shai-Hulud / credential theft
+```
+
+</details>
+
 ## Install
 
 ```bash
@@ -84,6 +107,7 @@ npx skills add superagent-ai/skills
 npx skills add superagent-ai/skills --skill ci-cd-security -a cursor -y
 npx skills add superagent-ai/skills --skill skill-security -a cursor -y
 npx skills add superagent-ai/skills --skill authz-security -a cursor -y
+npx skills add superagent-ai/skills --skill supply-chain-security -a cursor -y
 ```
 
 Once installed, skills load on their own when a task matches — nothing to remember or invoke by hand.
@@ -92,9 +116,10 @@ Once installed, skills load on their own when a task matches — nothing to reme
 
 ```
 skills/
-  ci-cd-security/    SKILL.md + references/
-  skill-security/    SKILL.md + scripts/ (scanner) + rules/ (YARA) + references/
-  authz-security/    SKILL.md + references/
+  ci-cd-security/         SKILL.md + references/
+  skill-security/         SKILL.md + scripts/ (scanner) + rules/ (YARA) + references/
+  authz-security/         SKILL.md + references/
+  supply-chain-security/  SKILL.md + references/
 ```
 
 A skill is a `SKILL.md` (the agent's instructions) plus optional `references/`, `scripts/`, and `rules/`.
