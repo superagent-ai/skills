@@ -51,6 +51,29 @@ Audit ./vendor/skill-foo/SKILL.md for prompt injection or credential theft
 
 </details>
 
+<details>
+<summary><b>authz-security</b>: broken access control (IDOR/BOLA) in your application code</summary>
+
+Use it when you're reviewing routes, controllers, or resolvers, auditing a PR that adds or changes endpoints, or hardening a multi-tenant SaaS — anywhere you need to answer "can one user reach another user's data?"
+
+It reads your source offline — routes, handlers, and data models — and reports the missing ownership or role check at `file:line` with a framework-correct fix. No running app, no credentials, no tools. Every finding comes with a severity (P0–P3) and a concrete rewrite. It catches:
+
+- Object-level gaps — IDOR / Broken Object Level Authorization (OWASP API1): objects loaded by id with no owner scoping
+- Function-level gaps — Broken Function Level Authorization (OWASP API5): privileged actions behind authentication but no role check
+- Mass assignment (OWASP API3) — request bodies that can set `role`/`owner_id`/`tenant_id`
+- Multi-tenant isolation leaks — unscoped collection and list endpoints
+- Identity trusted from client input, and authentication mistaken for authorization
+
+Rules encode OWASP's #1 web risk (A01) and top two API risks, applied as a source-code read rather than a live pentest — the defensive complement to a dynamic BOLA tester.
+
+```
+Review this endpoint for broken access control / IDOR
+Can a user access another user's data through this controller?
+Audit our multi-tenant API for BOLA and missing authorization
+```
+
+</details>
+
 ## Install
 
 ```bash
@@ -60,6 +83,7 @@ npx skills add superagent-ai/skills
 # or pick one
 npx skills add superagent-ai/skills --skill ci-cd-security -a cursor -y
 npx skills add superagent-ai/skills --skill skill-security -a cursor -y
+npx skills add superagent-ai/skills --skill authz-security -a cursor -y
 ```
 
 Once installed, skills load on their own when a task matches — nothing to remember or invoke by hand.
@@ -70,6 +94,7 @@ Once installed, skills load on their own when a task matches — nothing to reme
 skills/
   ci-cd-security/    SKILL.md + references/
   skill-security/    SKILL.md + scripts/ (scanner) + rules/ (YARA) + references/
+  authz-security/    SKILL.md + references/
 ```
 
 A skill is a `SKILL.md` (the agent's instructions) plus optional `references/`, `scripts/`, and `rules/`.
