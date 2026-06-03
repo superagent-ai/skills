@@ -84,6 +84,26 @@ Use this reference when choosing tools for an authorized recon workflow. Tools l
 
 If the user has access to one of these and asks about it, keep it optional. The core skill must still work without it.
 
+## Validation and manual testing
+
+- Burp Suite Community: proxy, Repeater, Intruder (careful rate limits).
+- OWASP ZAP: automated and manual passive/active scans within scope.
+- Browser devtools: cookies, storage, client-side logic.
+- Two test accounts: IDOR, BOLA, horizontal/vertical privilege tests.
+
+## Infrastructure
+
+- `nmap` with `sip-methods`, `sip-enum-users` (when authorized).
+- `nc` or `sipvicious`: SIP OPTIONS probes.
+- `smbclient`, `showmount`, `nmap` NFS/SMB scripts: file service exposure.
+- `enum4linux-ng`: optional SMB enumeration (noisy; scope approval).
+
+## Exploitation (RoE-dependent)
+
+- `sqlmap`: `--batch --level=3 --risk=2` for confirmation; no `--dump` by default.
+- `metasploit-framework`: only when explicitly in scope; prefer minimal module PoC.
+- Custom curl/httpie requests for auth bypass or logic flaws.
+
 ## Replacement guidance
 
 - Replace Shodan/Censys-style service intelligence with passive DNS/CT sources, RIPEstat/BGPView, `httpx`, `nmap`, `naabu`, public `urlscan.io`, and manual search.

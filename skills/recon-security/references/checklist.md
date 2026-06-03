@@ -1,100 +1,90 @@
-# Recon Security Checklist
+# Pentest Engagement Checklist
 
-Use this checklist for an authorized external recon engagement. Copy the relevant sections into working notes and mark each item as complete, skipped, or blocked.
+Full workflow: recon through reporting. Mark each item complete, skipped, or blocked.
 
 ## Scope and authorization
 
-- [ ] Confirm the user owns or is authorized to test the target.
-- [ ] Record in-scope domains.
-- [ ] Record in-scope subdomains, if limited.
-- [ ] Record in-scope IPs, CIDRs, ASNs, or cloud assets.
-- [ ] Record out-of-scope assets and third-party services.
-- [ ] Confirm whether production testing is allowed.
-- [ ] Confirm allowed intensity: passive only, light active, standard active, or deep testing.
-- [ ] Confirm blocked techniques, such as brute force, exploit attempts, denial-of-service risk, or state-changing requests.
-- [ ] Confirm evidence directory and naming convention.
-- [ ] Confirm whether the agent should execute commands or only provide command plans.
+- [ ] Confirm authorization to test the target.
+- [ ] Record in-scope domains, subdomains, IPs, ASNs, apps.
+- [ ] Record out-of-scope assets and third parties.
+- [ ] Confirm production vs staging rules.
+- [ ] Confirm intensity: passive, light active, standard, deep.
+- [ ] Confirm whether exploitation and credential tests are allowed.
+- [ ] Record blocked techniques (brute force, DoS, dump, lateral movement).
+- [ ] Set `PROJECT_DIR` and evidence layout (`references/environment-setup.md`).
+- [ ] Install required tools per `references/environment-setup.md` if missing.
 
-Do not proceed to active testing until the authorization and scope items are clear.
+## Environment
+
+- [ ] Core tools installed (nmap, httpx, subfinder, nuclei, ffuf, etc.).
+- [ ] `~/pentest-venv` activated when using Python tools.
+- [ ] SecLists available at `~/wordlists/SecLists`.
+- [ ] Burp Community or OWASP ZAP available for validation.
 
 ## Passive recon
 
-- [ ] Collect DNS records: `A`, `AAAA`, `MX`, `NS`, `TXT`, `SOA`, DMARC.
-- [ ] Collect WHOIS/RDAP for domains.
-- [ ] Collect WHOIS/RDAP for discovered IPs.
-- [ ] Check RIPEstat or BGPView for ASNs, prefixes, and routing context.
-- [ ] Query certificate transparency through `crt.sh`.
-- [ ] Run passive subdomain discovery with `subfinder`.
-- [ ] Run passive subdomain discovery with `amass -passive`.
-- [ ] Run `assetfinder` if available.
-- [ ] Collect historical URLs with `gau`.
-- [ ] Collect historical URLs with `waybackurls`.
-- [ ] Review public `urlscan.io` results if useful.
-- [ ] Prepare search-engine dorks for exposed files, admin paths, login pages, APIs, and old endpoints.
-- [ ] Review public code search for domains, endpoints, tokens, and configuration references without copying secrets.
+- [ ] DNS, WHOIS/RDAP, RIPEstat/BGPView.
+- [ ] Certificate transparency and passive subdomains.
+- [ ] Historical URLs (gau, waybackurls).
+- [ ] Public urlscan and search dorks.
+- [ ] Public code search (no secret exfiltration).
+- [ ] Passive recon commands executed or planned (DNS, CT, subdomains, historical URLs).
 
 ## Target normalization
 
-- [ ] Merge subdomain sources into `domains.txt`.
-- [ ] Remove duplicates and wildcard noise.
-- [ ] Remove obvious unrelated certificate names.
-- [ ] Mark third-party SaaS and CDN assets for scope review.
-- [ ] Resolve names with `dnsx` or equivalent.
-- [ ] Create `resolved_hosts.txt`.
-- [ ] Probe HTTP/HTTPS with `httpx`.
-- [ ] Create `web_targets.txt`.
-- [ ] Create `ips.txt` only from assets approved for IP scanning.
-- [ ] Keep uncertain targets in a separate `needs-scope-confirmation.txt` list.
+- [ ] `domains.txt`, `in_scope_domains.txt`, `web_targets.txt`, `ips.txt`.
+- [ ] `needs-scope-confirmation.txt` for uncertain assets.
+- [ ] Resolve with `dnsx`; probe with `httpx`.
 
 ## Active recon
 
-- [ ] Confirm active testing is authorized before running this section.
-- [ ] Set conservative rate limits.
-- [ ] Run `httpx` with status code, title, redirects, server, tech detection, and content length.
-- [ ] Run `nmap` top-port scan on approved IPs.
-- [ ] Run focused `nmap -sV` validation for interesting ports.
-- [ ] Run full-port scans only if approved.
-- [ ] Use `naabu` only where fast port discovery is appropriate.
-- [ ] Use `masscan` only with explicit approval and strict rate limiting.
-- [ ] Run `wafw00f` on approved web targets.
-- [ ] Run `testssl.sh` or `sslyze` on approved TLS endpoints.
-- [ ] Run `nuclei` with severity filters and open templates.
-- [ ] Save raw output and command logs.
-- [ ] Record failures, timeouts, and skipped scans as limitations.
+- [ ] Authorization confirmed.
+- [ ] Rate limits set.
+- [ ] `nmap` top ports, then focused service detection.
+- [ ] Full-port / `masscan` only if approved.
+- [ ] `wafw00f`, TLS checks, `nuclei` with triage.
+- [ ] Active recon commands executed or planned (httpx, nmap, nuclei, TLS, WAF).
 
 ## Web app testing
 
-- [ ] Fingerprint headers and response bodies for approved web targets.
-- [ ] Check security headers: HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy.
-- [ ] Check cookies for `Secure`, `HttpOnly`, and `SameSite`.
-- [ ] Check `.git`, `.env`, backups, config files, directory listing, `phpinfo`, `robots.txt`, `sitemap.xml`, and server-status pages.
-- [ ] Run `ffuf` or `feroxbuster` with conservative wordlists and rate limits.
-- [ ] Run `arjun` for parameter discovery where appropriate.
-- [ ] Crawl with `katana` or `hakrawler`.
-- [ ] Use historical URLs to identify old or hidden endpoints.
-- [ ] Run `sqlmap` only in detection or confirmation mode by default.
-- [ ] Run `dalfox` only against known/reflected parameters.
-- [ ] Use OWASP ZAP or Burp Suite Community for manual proxy review.
-- [ ] Stop and ask before any state-changing, authenticated, destructive, or data-extracting test.
+- [ ] Fingerprint and security headers.
+- [ ] Misconfiguration checks (.git, .env, backups, phpinfo).
+- [ ] Content and parameter discovery.
+- [ ] `sqlmap` detection-only; no dump by default.
+- [ ] `dalfox` on known parameters.
+- [ ] Web app baseline checks on each priority URL (fingerprint, misconfigs, params).
+
+## Infrastructure (if in scope)
+
+- [ ] SIP/VoIP ports and methods (5060/5061).
+- [ ] NAS/SMB/NFS/WebDAV port scan.
+- [ ] Share/export listing only when authorized; no customer data copy.
 
 ## Triage
 
-- [ ] Separate confirmed findings from likely findings and leads.
-- [ ] Manually confirm high and critical scanner results.
-- [ ] Deduplicate findings across tools.
-- [ ] Remove out-of-scope and third-party false positives.
-- [ ] Preserve raw evidence but keep sensitive data out of the final report.
-- [ ] Assign severity using the skill's P0 to P3 scale.
-- [ ] Write a concrete remediation for each confirmed finding.
-- [ ] Note residual risk and untested areas.
+- [ ] Queue prioritized in `evidence/triage/`.
+- [ ] Confirmed vs likely vs lead vs false positive.
+- [ ] Raw evidence preserved; secrets redacted from notes.
 
-## Report review
+## Validation
 
-- [ ] Executive summary states what was assessed and the overall risk.
-- [ ] Scope section lists included and excluded assets.
-- [ ] Methodology separates passive, active, and manual work.
-- [ ] Findings are ordered by severity.
-- [ ] Each finding includes target, evidence, impact, and fix.
-- [ ] Leads are clearly labeled as not confirmed.
-- [ ] Limitations are explicit.
-- [ ] No secrets, personal data, or unnecessary sensitive content are copied into the report.
+- [ ] Burp/ZAP session for priority apps.
+- [ ] Manual confirmation of critical/high scanner hits.
+- [ ] Two-account authz tests where applicable.
+- [ ] PoC meets bar in `references/validation.md`.
+- [ ] Confirmed findings moved to `evidence/findings/confirmed/`.
+
+## Scoped exploitation (only if RoE allows)
+
+- [ ] RoE read (`references/exploitation-roe.md`).
+- [ ] Minimum-impact proof only.
+- [ ] No prohibited techniques (dump, persistence, DoS, OOS assets).
+- [ ] Test artifacts cleaned up if required.
+
+## Report
+
+- [ ] Executive summary and scope.
+- [ ] Methodology covers all phases run.
+- [ ] Findings by severity with repro and fix.
+- [ ] Leads and limitations documented.
+- [ ] `references/report-template.md` applied.

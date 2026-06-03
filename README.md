@@ -75,22 +75,23 @@ Audit our multi-tenant API for BOLA and missing authorization
 </details>
 
 <details>
-<summary><b>recon-security</b>: authorized external recon with free/open-source tools</summary>
+<summary><b>recon-security</b>: external pentest workflow with free/open-source tools</summary>
 
-Use it when you're assessing owned domains, IP ranges, subdomains, web apps, TLS, or exposed services, and you want a model-guided recon workflow without commercial APIs.
+Use it when you're running an authorized external pentest: recon, validation, scoped exploitation, and reporting on domains, IPs, web apps, TLS, SIP/VoIP, or exposed storage — without commercial APIs.
 
-It guides the agent through scope confirmation, passive recon, target normalization, active scanning, web app checks, evidence handling, and reporting. The workflow requires explicit authorization before active testing and uses only free/open-source or public/free-access tools. It covers:
+It guides the agent end to end: scope/RoE, passive recon, normalization, active scanning, web and infrastructure checks, triage, manual validation (Burp/ZAP), scoped exploitation when approved, and final reporting. No bundled scripts — the model proposes commands and checklists; the user runs tools locally. It covers:
 
-- Passive discovery with DNS, WHOIS/RDAP, RIPEstat, certificate transparency, `subfinder`, `amass`, `assetfinder`, `gau`, and `waybackurls`
-- Target normalization with `dnsx`, `httpx`, deduplicated host lists, and scope review
-- Active recon with `nmap`, `naabu`, optional rate-limited `masscan`, `wafw00f`, `testssl.sh` / `sslyze`, and `nuclei` open templates
-- Web app checks with `ffuf`, `feroxbuster`, `arjun`, `katana`, `hakrawler`, `sqlmap` detection mode, `dalfox`, OWASP ZAP, and Burp Suite Community
-- Reporting that separates confirmed findings, likely findings, leads, false positives, and limitations
+- Recon: DNS, WHOIS/RDAP, RIPEstat, CT, `subfinder`, `amass`, `gau`, `waybackurls`, `httpx`, `nmap`, `nuclei`
+- Web: `ffuf`, `arjun`, `sqlmap` detection mode, `dalfox`, misconfiguration checks
+- Infra: SIP/VoIP and NAS/SMB/NFS exposure checks when in scope
+- Validation and PoC bar; exploitation boundaries in `references/exploitation-roe.md`
+- Pairing with `authz-security` for IDOR/BOLA when source or two-account testing is available
 
 ```
-Plan authorized recon for example.com using free tools only
-Run passive recon guidance for this owned domain
-Help me triage httpx, nmap, and nuclei output into a security report
+Plan a full external pentest for example.com with free tools only
+Run validation on these nuclei findings before we report
+What exploitation is allowed under our RoE for this SQLi lead?
+Give me passive recon commands for example.com and where to save evidence
 ```
 
 </details>

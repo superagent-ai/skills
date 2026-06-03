@@ -1,134 +1,164 @@
 ---
 name: recon-security
-description: Conduct authorized external security reconnaissance with free and open-source tools. Use when assessing owned domains, IP ranges, subdomains, web apps, TLS, exposed services, or external attack surface; when the user mentions recon, OSINT, subdomain discovery, httpx, nuclei, nmap, ffuf, OWASP ZAP, or asks to probe a domain without commercial APIs.
+description: Guide authorized external penetration testing from recon through validation and scoped exploitation using free and open-source tools. Use for domain/IP attack surface mapping, subdomain discovery, nmap/httpx/nuclei/ffuf workflows, web app testing, SIP/NAS checks, Burp/ZAP validation, PoC documentation, and pentest reporting without commercial APIs.
 ---
 
 # Recon Security
 
-This skill guides an agent through authorized external reconnaissance. It is a workflow skill: establish scope, separate passive and active work, use only free/open-source tools, preserve evidence, and report confirmed exposures separately from leads.
+This skill guides an agent through an **authorized external pentest workflow**: recon, normalization, active discovery, web and infrastructure checks, validation, scoped exploitation (when RoE allows), and reporting. Use only free/open-source tools unless the user explicitly opts into commercial services outside this skill.
 
-Do not assume permission. Before any active probing, confirm the target scope, authorization, scan intensity, exclusions, and evidence location. If the user only wants advice or planning, stay in planning mode and provide commands as examples rather than executing them.
+Do not assume permission. Gate every active, invasive, or state-changing step on Pass 0. This skill is model-guided only: propose commands and workflows; the user or agent runs them when scope and mode allow. No bundled scripts ship with this skill.
+
+## Engagement lifecycle
+
+```text
+Pass 0 Scope/RoE → Pass 1 Passive → Pass 2 Normalize → Pass 3 Active
+    → Pass 4 Web + infra → Pass 5 Triage → Pass 6 Validation
+    → Pass 7 Scoped exploitation (if approved) → Pass 8 Report
+```
 
 ## Mental model
 
-Recon is not exploitation. The goal is to build an accurate map of externally visible assets and identify likely security exposures with enough evidence for a human to verify and remediate.
+- **Recon** maps what is exposed.
+- **Validation** proves what matters with minimal reproducible evidence.
+- **Exploitation** demonstrates impact only within written RoE — not unrestricted attack.
 
-Keep three boundaries clear:
+Prefer conservative, reproducible checks. One confirmed finding beats dozens of scanner lines.
 
-- **Passive**: public data sources and third-party indexes. No packets to target infrastructure beyond normal DNS/public lookups.
-- **Active**: resolving, probing, scanning, fuzzing, and template checks that contact target assets. Requires explicit authorization and rate limits.
-- **Manual confirmation**: browser/proxy review, screenshots, and careful validation. Never dump data, exploit persistence, move laterally, or extract secrets as part of the default workflow.
+## Pass 0: scope and authorization
 
-The agent should prefer conservative, reproducible checks over noisy scans. A small confirmed exposure with clean evidence is more useful than a large pile of untriaged scanner output.
+Establish before any active work:
 
-## Pass 0: scope and authorization gate
+- In-scope domains, subdomains, IPs, ASNs, apps, and environments (prod vs staging).
+- Out-of-scope assets and forbidden techniques (brute force, DoS, data dump, lateral movement).
+- Written authorization or explicit ownership.
+- Scan intensity: passive only, light active, standard, or deep.
+- Whether exploitation and credential testing are allowed.
+- Evidence directory (`PROJECT_DIR`, default `~/Projects/pentest-engagement`). See `references/environment-setup.md`.
+- Deliverable: command plan only, executed tests, or full report.
 
-Before active testing, establish:
-
-- In-scope domains, subdomains, IP ranges, ASNs, cloud assets, and web apps.
-- Out-of-scope assets, third-party services, production limits, and blocked techniques.
-- Written authorization or an explicit statement that the user owns/controls the targets.
-- Allowed scan intensity: passive only, light active, standard active, or deep testing.
-- Evidence directory and naming convention.
-- Whether the user wants commands only, execution by the agent, or a final report.
-
-If authorization is missing or ambiguous, do not run active commands. Provide a passive-only plan and ask for scope confirmation.
+If authorization is unclear, stop at passive planning and ask.
 
 ## Pass 1: passive recon
 
-Build the target inventory without direct active testing:
+Build inventory from public sources only:
 
-- DNS records: `A`, `AAAA`, `MX`, `NS`, `TXT`, `SOA`, DMARC.
-- WHOIS/RDAP, RIPEstat, BGPView, ASN and netblock context.
-- Certificate transparency through `crt.sh` and tool outputs from `subfinder`, `amass -passive`, and `assetfinder`.
-- Historical URLs through `gau`, `waybackurls`, Common Crawl indexes, and public `urlscan.io`.
-- Search-engine dorks and public code search for exposed files, old endpoints, admin paths, and leaked references.
+- DNS, WHOIS/RDAP, RIPEstat/BGPView, certificate transparency (`crt.sh`, `subfinder`, `amass -passive`, `assetfinder`).
+- Historical URLs (`gau`, `waybackurls`, Common Crawl, public `urlscan.io`).
+- Search dorks and public code references (no secret copying).
 
-Deduplicate aggressively. Track source and timestamp for each asset so the report can explain where it came from.
+Use example commands from `references/environment-setup.md` and `references/tools.md` when the user wants executable steps.
 
 ## Pass 2: normalize targets
 
-Convert raw discoveries into working target lists:
+Produce working lists under `targets/`:
 
-- `domains.txt`: all candidate hostnames.
-- `in_scope_domains.txt`: hostnames confirmed in scope.
-- `resolved_hosts.txt`: live DNS names with resolved addresses.
-- `web_targets.txt`: HTTP/HTTPS URLs for probing.
-- `ips.txt`: IP addresses or ranges approved for scanning.
+- `domains.txt`, `in_scope_domains.txt`, `resolved_hosts.txt`, `web_targets.txt`, `ips.txt`
+- `needs-scope-confirmation.txt` for uncertain assets
 
-Filter parked domains, obvious CDNs if they are out of scope, unrelated certificate names, and third-party SaaS unless explicitly authorized. When in doubt, mark as `needs-scope-confirmation` instead of scanning it.
+Deduplicate; drop unrelated CT names and out-of-scope SaaS unless approved.
 
 ## Pass 3: active recon
 
-Only run active recon after Pass 0 is satisfied. Keep scans rate-limited and focused.
+Requires Pass 0 approval. Rate-limit all probes.
 
-Recommended flow:
+- `dnsx`, `httpx`, `nmap` (top ports first), optional `naabu` / rate-limited `masscan`
+- `wafw00f`, `testssl.sh` or `sslyze`, `nuclei` (open templates; triage as leads)
 
-1. Resolve and classify hosts with `dnsx` and `httpx`.
-2. Probe HTTP services with status code, title, server, tech detection, redirects, and content length.
-3. Scan approved IPs with `nmap`; start with top ports and service detection before any full-port scan.
-4. Use `naabu` for fast port discovery where appropriate; use `masscan` only when explicitly approved and rate-limited.
-5. Check WAF presence with `wafw00f`.
-6. Analyze TLS with `testssl.sh` or `sslyze`.
-7. Run `nuclei` with open templates and a clear severity filter. Treat template findings as leads until manually confirmed.
+Propose rate-limited active commands; save raw output under `evidence/active/`.
 
-Save raw output and logs. Do not hide scanner failures; record them as limitations.
+## Pass 4: web app and infrastructure checks
 
-## Pass 4: web app checks
+### Web applications
 
-For approved web targets:
+- Fingerprint headers, cookies, security headers, technologies.
+- Misconfigurations: `.git`, `.env`, backups, `phpinfo`, directory listing, `robots.txt`.
+- Content/parameter discovery: `ffuf`, `feroxbuster`, `arjun`, `katana`, `hakrawler`.
+- Light automated probes; `sqlmap` detection-only by default; `dalfox` for reflected XSS leads.
+- Manual proxy review: OWASP ZAP or Burp Suite Community.
 
-- Fingerprint headers, cookies, security headers, redirects, technologies, and interesting response bodies.
-- Check common exposures: `.git`, `.env`, backups, config files, directory listing, `phpinfo`, `robots.txt`, `sitemap.xml`, server-status pages.
-- Discover content with `ffuf` or `feroxbuster` using conservative wordlists and rate limits.
-- Discover parameters with `arjun`, crawlers such as `katana` or `hakrawler`, and historical URLs.
-- Use `sqlmap` only in detection/confirmation mode by default. Do not use dump/exfiltration options.
-- Use `dalfox` for reflected XSS checks where inputs are known. Treat automated results as leads.
-- Use OWASP ZAP or Burp Suite Community for manual proxy review.
+Walk through fingerprinting, misconfiguration checks, and light probes for each priority URL.
 
-Never attempt credential stuffing, destructive requests, persistence, lateral movement, or data extraction. If testing could modify state, pause and ask.
+### Infrastructure (when in scope)
+
+Telecom, storage, and file services often appear on external pentests:
+
+- **SIP/VoIP**: UDP/TCP 5060/5061, `nmap --script=sip-methods`, OPTIONS probes. No call setup unless authorized.
+- **NAS/file exposure**: ports 445, 139, 548, 873, 2049, 5000/5001, 8080; `smbclient -N -L`, `showmount -e`. Document share permissions, not customer file contents.
+
+Save SIP/NAS results under `evidence/infra/`.
 
 ## Pass 5: triage and evidence
 
-Separate results into:
+Classify every item:
 
-- **Confirmed finding**: reproduced behavior with clear request/response or scanner evidence and impact.
-- **Likely finding**: strong signal that needs manual confirmation.
-- **Lead**: interesting asset, endpoint, port, or technology requiring follow-up.
-- **Out of scope / false positive**: unrelated, third-party, duplicate, or not reproducible.
+| Class | Meaning |
+|-------|---------|
+| Confirmed finding | Reproduced with clear evidence and impact |
+| Likely finding | Strong signal; needs Pass 6 |
+| Lead | Interesting; not yet tested |
+| False positive / OOS | Drop from report |
 
-For every confirmed or likely finding, capture target, timestamp, tool, command or method, relevant output, impact, and recommended fix. Avoid including secrets or sensitive personal data in the report; describe exposure without copying protected content.
+Build a prioritized queue for validation. Store under `evidence/triage/`. Never paste secrets or bulk PII into reports.
+
+## Pass 6: validation
+
+Turn leads into confirmed findings. Read `references/validation.md`.
+
+- Import `web_targets.txt` into Burp or ZAP; map auth and roles.
+- Manually confirm nuclei/ffuf/sqlmap signals.
+- Two-account testing for IDOR/BOLA; pair with `authz-security` when code is available.
+- Infrastructure: focused port/service re-checks; SIP/NAS proof without data theft.
+
+PoC bar: numbered steps, request/response or screenshot, impact, fix.
+
+## Pass 7: scoped exploitation
+
+Only when Pass 0 explicitly allows exploitation. Read `references/exploitation-roe.md`.
+
+- Minimum proof of impact (one row, one harmless upload, one auth bypass with test accounts).
+- No `--dump`, persistence, lateral movement, or destructive actions unless contract permits.
+- Remove test artifacts when cleanup is required.
+- Stop and escalate if scope, production risk, or legal boundaries are unclear.
+
+## Pass 8: reporting
+
+Use `references/report-template.md`. Include:
+
+- Executive summary and scope
+- Methodology by phase (passive, active, validation, exploitation if run)
+- Findings by severity with reproduction and remediation
+- Leads and limitations
+- Remediation roadmap (immediate / short / long term)
 
 ## Severity scale
 
-- **P0**: Publicly reachable exposure of sensitive data, unauthenticated admin/control plane, exploitable critical CVE with clear evidence, or dangerous misconfiguration enabling immediate compromise.
-- **P1**: High-impact weakness requiring limited conditions: exposed management service, serious TLS/auth/session weakness, confirmed injection without data extraction, high-severity nuclei result confirmed manually.
-- **P2**: Medium-risk exposure or hardening gap: verbose errors, weak headers, directory listing without sensitive data, outdated service with no confirmed exploit path, broad attack surface.
-- **P3**: Informational or hygiene: missing headers, low-risk fingerprinting leaks, stale DNS, parked assets, scan limitations, documentation gaps.
+- **P0**: Sensitive data exposure, unauthenticated admin/control, confirmed critical exploit path.
+- **P1**: High-impact issue with limited preconditions; confirmed injection or authz break without mass extraction.
+- **P2**: Medium exposure or hardening gap without confirmed exploit chain.
+- **P3**: Informational, hygiene, or scan limitations.
 
 ## Output format
 
-When reporting, lead with findings by severity and keep raw scanner noise out of the main answer.
-
 ```
 [P1] exposed-admin-panel on https://admin.example.com
-  Evidence: httpx identified a reachable login panel; screenshot and headers saved.
-  Impact: Public admin surface increases password-guessing and exploit exposure.
-  Confirmation: Manual browser review confirmed this is an admin portal, not a static asset.
-  Fix: Restrict by VPN or identity-aware proxy, enforce MFA, and monitor access logs.
+  Evidence: httpx + manual browser review; headers in evidence/webapp/.
+  Impact: Public admin surface increases credential and exploit risk.
+  Fix: Restrict by VPN/IdP, enforce MFA, monitor access.
 ```
-
-If nothing material is found, say what was checked, what tools or phases ran, and what remains unverified.
 
 ## Reference files
 
-- `references/tools.md` - free/open-source tools by phase, including excluded commercial replacements.
-- `references/checklist.md` - full engagement checklist for scope, recon, web app checks, evidence, and report review.
-- `references/report-template.md` - report structure and finding template.
+- `references/tools.md` — approved tools and commercial exclusions
+- `references/checklist.md` — full engagement checklist
+- `references/environment-setup.md` — macOS setup and directory layout
+- `references/validation.md` — manual validation and PoC bar
+- `references/exploitation-roe.md` — allowed/prohibited exploitation boundaries
+- `references/report-template.md` — final deliverable structure
 
 ## What this skill won't do
 
-- It won't require Shodan, Censys, DeHashed, IntelX, Burp Pro, or other paid/commercial services.
-- It won't treat scanner output as proof without triage.
-- It won't perform exploitation, dumping, persistence, lateral movement, credential attacks, or destructive testing.
-- It won't bypass authorization. If scope is unclear, it pauses before active testing.
+- Require Shodan, Censys, DeHashed, IntelX, or Burp Pro.
+- Treat scanner output as confirmed without Pass 6.
+- Run exploitation, dumping, persistence, or lateral movement without explicit RoE approval.
+- Bypass authorization or test out-of-scope assets.

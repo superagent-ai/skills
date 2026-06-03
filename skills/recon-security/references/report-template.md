@@ -37,6 +37,18 @@ Web app review:
 - Content and parameter discovery.
 - Manual confirmation of high-signal results.
 
+Validation:
+
+- Burp/ZAP manual testing, two-account authz checks, PoC reproduction.
+
+Scoped exploitation (if performed):
+
+- Techniques used, RoE constraints, minimum proof, cleanup performed.
+
+Infrastructure (if performed):
+
+- SIP/VoIP, NAS/SMB/NFS exposure summary without sensitive file content.
+
 ## Scope
 
 In scope:
@@ -100,6 +112,9 @@ Use this section for assets or signals that are not confirmed vulnerabilities:
 - `passive/`: DNS, CT logs, subdomains, historical URLs, public-source notes.
 - `active/`: HTTP probing, port scans, TLS checks, WAF checks, nuclei output.
 - `webapp/`: fingerprints, content discovery, parameter checks, manual notes.
+- `infra/`: SIP, NAS, SMB/NFS scan output.
+- `triage/`: prioritized queue and notes.
+- `findings/confirmed/` and `findings/leads/`: validated vs unconfirmed.
 - `screenshots/`: non-sensitive screenshots for confirmed findings.
 - `logs/`: command logs and scan limitations.
 
