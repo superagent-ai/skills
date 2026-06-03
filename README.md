@@ -75,6 +75,27 @@ Audit our multi-tenant API for BOLA and missing authorization
 </details>
 
 <details>
+<summary><b>recon-security</b>: authorized external recon with free/open-source tools</summary>
+
+Use it when you're assessing owned domains, IP ranges, subdomains, web apps, TLS, or exposed services, and you want a model-guided recon workflow without commercial APIs.
+
+It guides the agent through scope confirmation, passive recon, target normalization, active scanning, web app checks, evidence handling, and reporting. The workflow requires explicit authorization before active testing and uses only free/open-source or public/free-access tools. It covers:
+
+- Passive discovery with DNS, WHOIS/RDAP, RIPEstat, certificate transparency, `subfinder`, `amass`, `assetfinder`, `gau`, and `waybackurls`
+- Target normalization with `dnsx`, `httpx`, deduplicated host lists, and scope review
+- Active recon with `nmap`, `naabu`, optional rate-limited `masscan`, `wafw00f`, `testssl.sh` / `sslyze`, and `nuclei` open templates
+- Web app checks with `ffuf`, `feroxbuster`, `arjun`, `katana`, `hakrawler`, `sqlmap` detection mode, `dalfox`, OWASP ZAP, and Burp Suite Community
+- Reporting that separates confirmed findings, likely findings, leads, false positives, and limitations
+
+```
+Plan authorized recon for example.com using free tools only
+Run passive recon guidance for this owned domain
+Help me triage httpx, nmap, and nuclei output into a security report
+```
+
+</details>
+
+<details>
 <summary><b>supply-chain-security</b>: malicious or compromised dependencies before they land</summary>
 
 Use it when you're adding or upgrading a dependency, reviewing a PR that changes `package.json`, `requirements.txt`, `go.mod`, or a lockfile, or deciding whether a package is safe to install — anywhere you need to answer "is this dependency safe to add?"
@@ -107,6 +128,7 @@ npx skills add superagent-ai/skills
 npx skills add superagent-ai/skills --skill ci-cd-security -a cursor -y
 npx skills add superagent-ai/skills --skill skill-security -a cursor -y
 npx skills add superagent-ai/skills --skill authz-security -a cursor -y
+npx skills add superagent-ai/skills --skill recon-security -a cursor -y
 npx skills add superagent-ai/skills --skill supply-chain-security -a cursor -y
 ```
 
@@ -119,6 +141,7 @@ skills/
   ci-cd-security/         SKILL.md + references/
   skill-security/         SKILL.md + scripts/ (scanner) + rules/ (YARA) + references/
   authz-security/         SKILL.md + references/
+  recon-security/         SKILL.md + references/
   supply-chain-security/  SKILL.md + references/
 ```
 
