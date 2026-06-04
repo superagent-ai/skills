@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-security-suite thin orchestration helper.
+hacker thin orchestration helper.
 
 This script does deterministic support work only:
 1. discover the target surface and dispatch plan;
@@ -27,10 +27,16 @@ import reporter  # noqa: E402
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Security-suite discovery, merge, and report helper")
+    parser = argparse.ArgumentParser(description="Hacker discovery, merge, and report helper")
     parser.add_argument("target", help="Target repository or file")
     parser.add_argument("--domain", help="Authorized live domain/IP scope for recon-security")
     parser.add_argument("--advisory", help="Supplied advisory/report input for vulnerability-triage")
+    parser.add_argument(
+        "--offensive",
+        action="store_true",
+        help="Discovery plan includes offensive-security (agent runs validation with --scope)",
+    )
+    parser.add_argument("--scope", help="Path to scope.yaml for offensive-security (documented for agent; not executed here)")
     parser.add_argument("--findings", nargs="*", default=[], help="Child skill JSON outputs to merge")
     parser.add_argument("--plan-output", help="Write discovery plan JSON to this path")
     parser.add_argument("--deduped-output", help="Write deduplicated JSON to this path")
@@ -47,7 +53,7 @@ def main(argv: list[str] | None = None) -> int:
     matrix = discover.load_matrix(discover.DEFAULT_MATRIX)
     root = target if target.is_dir() else target.parent
     inventory = discover.build_inventory(target, root)
-    plan = discover.build_dispatch_plan(target, root, inventory, matrix, args.domain, args.advisory)
+    plan = discover.build_dispatch_plan(target, root, inventory, matrix, args.domain, args.advisory, args.offensive)
     plan_json = json.dumps(plan, indent=2, sort_keys=True)
 
     if args.plan_output:
@@ -69,7 +75,11 @@ def main(argv: list[str] | None = None) -> int:
     adjusted, adjustment_log = deduplicator.apply_context_scoring(deduped)
     adjusted = sorted(adjusted, key=deduplicator.finding_sort_key)
     result = {
-        "tool": "security-suite-orchestrator",
+        "tool": "hacker-orchestrator",
+        "offensive_requested": args.offensive,
+        "offensive_scope": args.scope,
+        "post_audit_skills": plan.get("post_audit_skills", []),
+        "workflow_order": plan.get("workflow_order", plan.get("skills_to_run", [])),
         "summary": deduplicator.summarize(adjusted),
         "findings": adjusted,
         "merge_log": merge_log,

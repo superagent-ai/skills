@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-security-suite discovery helper.
+hacker discovery helper.
 
 Classifies a target tree from file and directory signals, then emits a
 deterministic dispatch plan for the meta-skill. Pure standard library: no YAML
@@ -102,11 +102,16 @@ CONTENT_HINT_PATTERNS = {
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Discover security-suite audit surface")
+    parser = argparse.ArgumentParser(description="Discover hacker audit surface")
     parser.add_argument("target", help="Directory or file to classify")
     parser.add_argument("--matrix", default=str(DEFAULT_MATRIX), help="Coverage matrix path")
     parser.add_argument("--domain", help="Authorized live domain or IP scope")
     parser.add_argument("--advisory", help="Path/id for supplied advisory, CVE/GHSA, or report")
+    parser.add_argument(
+        "--offensive",
+        action="store_true",
+        help="Include offensive-security in plan (requires scope.yaml at validation time)",
+    )
     parser.add_argument("--format", choices=("json", "markdown"), default="json")
     parser.add_argument("--output", help="Write result to this file instead of stdout")
     args = parser.parse_args(argv)
@@ -120,7 +125,7 @@ def main(argv: list[str] | None = None) -> int:
     matrix = load_matrix(matrix_path)
     root = target if target.is_dir() else target.parent
     inventory = build_inventory(target, root)
-    plan = build_dispatch_plan(target, root, inventory, matrix, args.domain, args.advisory)
+    plan = build_dispatch_plan(target, root, inventory, matrix, args.domain, args.advisory, args.offensive)
 
     rendered = json.dumps(plan, indent=2, sort_keys=True) if args.format == "json" else render_markdown(plan)
     if args.output:
@@ -208,7 +213,15 @@ def detect_frameworks(files: list[str], content_hints: set[str]) -> list[str]:
     return sorted(set(frameworks))
 
 
-def build_dispatch_plan(target: Path, root: Path, inventory: dict, matrix: dict, domain: str | None, advisory: str | None) -> dict:
+def build_dispatch_plan(
+    target: Path,
+    root: Path,
+    inventory: dict,
+    matrix: dict,
+    domain: str | None,
+    advisory: str | None,
+    offensive: bool = False,
+) -> dict:
     repo_scores: list[dict] = []
     for repo_type, config in matrix.get("repo_types", {}).items():
         matched = [s for s in config.get("signals", []) if signal_matches(s, inventory, domain, advisory)]
@@ -252,11 +265,25 @@ def build_dispatch_plan(target: Path, root: Path, inventory: dict, matrix: dict,
             else:
                 skipped_optional[skill] = "requires supplied advisory/report input"
             continue
+        if skill == "offensive-security":
+            continue
         if any(signal_matches(t, inventory, domain, advisory) for t in triggers):
             selected.append(skill)
 
     excluded = set(repo_config.get("excluded_skills", []))
     selected = [skill for skill in unique(selected) if skill not in excluded]
+
+    post_audit_skills: list[str] = []
+    offensive_condition = matrix.get("optional_skill_conditions", {}).get(
+        "offensive-security",
+        "requires explicit user request and sandbox scope.yaml",
+    )
+    if offensive and "offensive-security" not in excluded:
+        post_audit_skills.append("offensive-security")
+    else:
+        skipped_optional["offensive-security"] = (
+            f"{offensive_condition} Runs last (Phase 6), after all defensive skills and deduplicated findings."
+        )
     detected_surfaces = {
         surface: [signal for signal in signals if signal_matches(signal, inventory, domain, advisory)]
         for surface, signals in matrix.get("surfaces", {}).items()
@@ -264,7 +291,7 @@ def build_dispatch_plan(target: Path, root: Path, inventory: dict, matrix: dict,
     detected_surfaces = {k: v for k, v in detected_surfaces.items() if v}
 
     return {
-        "tool": "security-suite-discover",
+        "tool": "hacker-discover",
         "version": matrix.get("version", 1),
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "target": str(target),
@@ -277,6 +304,8 @@ def build_dispatch_plan(target: Path, root: Path, inventory: dict, matrix: dict,
         "detected_languages": inventory["languages"],
         "detected_frameworks": inventory["frameworks"],
         "skills_to_run": selected,
+        "post_audit_skills": post_audit_skills,
+        "workflow_order": selected + post_audit_skills,
         "skipped_optional_skills": skipped_optional,
         "repo_type_scores": repo_scores,
         "inventory": {
@@ -288,6 +317,7 @@ def build_dispatch_plan(target: Path, root: Path, inventory: dict, matrix: dict,
         "inputs": {
             "domain": domain,
             "advisory": advisory,
+            "offensive": offensive,
         },
     }
 
@@ -341,11 +371,12 @@ def normalize_path(value: str) -> str:
 
 def render_markdown(plan: dict) -> str:
     lines = [
-        f"# Security Suite Discovery: {plan['repo_type']}",
+        f"# Hacker Discovery: {plan['repo_type']}",
         "",
         f"- Target: `{plan['target']}`",
         f"- Confidence: {plan['confidence']}",
-        f"- Skills to run: {', '.join(plan['skills_to_run']) or 'none'}",
+        f"- Skills to run (Phases 2–5): {', '.join(plan['skills_to_run']) or 'none'}",
+        f"- Post-audit / last (Phase 6): {', '.join(plan.get('post_audit_skills', [])) or 'none'}",
         f"- Languages: {', '.join(plan['detected_languages']) or 'none detected'}",
         f"- Frameworks: {', '.join(plan['detected_frameworks']) or 'none detected'}",
         "",

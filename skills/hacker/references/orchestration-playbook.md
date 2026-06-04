@@ -1,6 +1,6 @@
-# Security Suite Orchestration Playbook
+# Hacker Orchestration Playbook
 
-Use this playbook when `security-suite` needs more detail than the main `SKILL.md` should carry.
+Use this playbook when `hacker` needs more detail than the main `SKILL.md` should carry.
 
 ## Phase 1 - Discovery
 
@@ -9,6 +9,7 @@ Inputs:
 - target directory or file
 - optional live domain/IP scope
 - optional advisory/report input
+- optional `--offensive` flag or explicit user request for exploit validation
 - optional user constraints such as passive-only, PR-only, or compliance focus
 
 Outputs:
@@ -23,10 +24,13 @@ Success criteria:
 - Dispatch is deterministic from the target tree plus explicit user inputs.
 - `recon-security` is selected only when live scope and authorization are explicit.
 - `vulnerability-triage` is selected only when a report/advisory is supplied.
+- `offensive-security` appears in `post_audit_skills` only with `--offensive` or explicit user request; never in `skills_to_run` and never during Phase 2.
 
-## Phase 2 - Dispatch
+## Phase 2 - Dispatch (defensive specialists only)
 
-Run specialists in read-only mode. The suite may use subagents for parallelism, but each child result must return either normalized findings or a clean-scan statement plus limits.
+Run every skill in `skills_to_run` in read-only mode. **Exclude `offensive-security`** — it runs last in Phase 6.
+
+The suite may use subagents for parallelism, but each child result must return either normalized findings or a clean-scan statement plus limits.
 
 Suggested parallel groups:
 
@@ -54,6 +58,7 @@ Failure handling:
 | `skill-security` | Continue. Mark agent/plugin coverage incomplete. |
 | `recon-security` | Continue. Mark external attack-surface coverage incomplete. |
 | `vulnerability-triage` | Continue. Mark report triage incomplete. |
+| `offensive-security` | Continue defensive report. Note offensive phase skipped in appendix. |
 
 No single specialist failure should abort the suite unless the user asked for strict all-skills coverage.
 
@@ -74,30 +79,6 @@ Secondary merge:
 - Use when two skills describe the same underlying weakness with different rule ids.
 - Mark the result as compound and keep all original rule ids.
 
-Examples:
-
-Single finding found by two skills:
-
-```text
-crypto-secrets: [P1] jwt-hardcoded-secret in api/auth.py:41
-authz-security: [P2] token-forgery-risk in api/auth.py:41
-
-Result: [P1] jwt-hardcoded-secret in api/auth.py:41
-Sources: crypto-secrets, authz-security
-Merge reason: same file, line, and token-forgery root cause.
-```
-
-Compound finding:
-
-```text
-ci-cd-security: [P1] workflow-token-write in .github/workflows/release.yml:8
-supply-chain-security: [P1] install-scripts-run-with-publish-token in .github/workflows/release.yml:34
-
-Result: [P1] release-pipeline-secret-exposure in .github/workflows/release.yml:8-34
-Sources: ci-cd-security, supply-chain-security
-Merge reason: both findings describe publish-token exposure in the same workflow.
-```
-
 ## Phase 4 - Severity And Business Context
 
 Use P0-P3 plus Informational.
@@ -114,13 +95,6 @@ Severity reducers:
 - Pure placeholder value with no production path: Informational.
 - Admin-only route with visible strong role/MFA controls: downgrade one tier, floor P3.
 - Feature-flagged beta code not deployed: downgrade one tier when the flag boundary is visible.
-
-Path patterns:
-
-```text
-Boosters: auth/, login/, session/, token/, payment/, billing/, checkout/, admin/, api/, routes/, controllers/, release, deploy
-Reducers: test/, tests/, spec/, fixtures/, example/, examples/, demo/, docs/, samples/
-```
 
 ## Phase 5 - Report
 
@@ -140,17 +114,48 @@ Required sections:
 
 Clean report rule:
 
-If no findings remain after confirmation, say "No findings against the selected security-suite control set." Also state which skills ran and what static analysis cannot prove.
+If no findings remain after confirmation, say "No findings against the selected hacker control set." Also state which skills ran and what static analysis cannot prove.
+
+## Phase 6 - Offensive Validation (optional, **last**)
+
+Run **after** Phases 3, 4, and 5 — when `post_audit_skills` includes `offensive-security`, the user requests exploit validation, and `scope.yaml` is available. Use `deduped-findings.json` from Phase 3, not pre-dedupe scanner JSON.
+
+Steps:
+
+1. `ingest_findings.py` on `deduped-findings.json`
+2. `hypothesis_generator.py` on normalized output
+3. `validator.py` with `--scope scope.yaml` (or `--dry-run` to document skips)
+4. `reporter.py` for `offensive-security-report-*.md`
+
+Failure handling:
+
+| Condition | Response |
+|---|---|
+| Docker missing | Mark inconclusive/unsafe_to_test; note in hacker appendix |
+| No scope file | Dry-run only; do not probe production |
+| Validator error | Continue; list failed hypothesis ids in appendix |
+
+Do not merge confirmed offensive findings into executive risk rating without explicit user approval; prefer a separate offensive report section.
 
 ## CI Integration
 
 The helper CLI can be used after skill outputs are collected:
 
 ```bash
-python3 skills/security-suite/scripts/orchestrator.py . \
+python3 skills/hacker/scripts/orchestrator.py . \
   --findings results/crypto.json results/infra.json \
-  --output security-suite-report.md \
+  --output hacker-report.md \
   --strict
+```
+
+Offensive follow-up (agent-run, not orchestrator-built-in):
+
+```bash
+python3 skills/hacker/scripts/discover.py . --offensive
+python3 skills/offensive-security/scripts/ingest_findings.py deduped-findings.json -o normalized.json
+python3 skills/offensive-security/scripts/hypothesis_generator.py normalized.json -o hypotheses.json
+python3 skills/offensive-security/scripts/validator.py hypotheses.json --scope scope.yaml -o outcomes.json
+python3 skills/offensive-security/scripts/reporter.py outcomes.json -o offensive-security-report.md
 ```
 
 Strict mode should fail when P0 or P1 findings remain. It should not claim model-only skills were run unless their result files are present.

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "format_note": "JSON-compatible YAML. This file defines the normalized finding contract for security-suite helpers and model-only skill output.",
+  "format_note": "JSON-compatible YAML. This file defines the normalized finding contract for hacker helpers and model-only skill output.",
   "severity_order": ["P0", "P1", "P2", "P3", "Informational"],
   "required_fields": [
     "source_skill",
@@ -57,7 +57,10 @@
       "evidence": "evidence"
     },
     "model_only_skills": {
-      "note": "authz-security, ci-cd-security, supply-chain-security, recon-security, and vulnerability-triage should emit this normalized shape directly when used inside security-suite."
+      "note": "authz-security, ci-cd-security, supply-chain-security, recon-security, and vulnerability-triage should emit this normalized shape directly when used inside hacker."
+    },
+    "offensive-security": {
+      "note": "Confirmed vulnerability outcomes use outcome, evidence, negative_control, blast_radius, remediation_priority from validator JSON; link via parent_finding_id to hacker finding id."
     }
   },
   "dedupe_rules": {

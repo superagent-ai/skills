@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-security-suite markdown reporter.
+hacker markdown reporter.
 
 Renders the deduplicated JSON produced by deduplicator.py into an executive
 report. Pure standard library; no template engine required.
@@ -20,7 +20,7 @@ SEVERITIES = ("P0", "P1", "P2", "P3", "Informational")
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Render a security-suite markdown report")
+    parser = argparse.ArgumentParser(description="Render a hacker markdown report")
     parser.add_argument("deduped", help="Deduplicated JSON result, or '-' for stdin")
     parser.add_argument("--plan", help="Discovery plan JSON from discover.py")
     parser.add_argument("--target", help="Override target path in report")
@@ -97,7 +97,7 @@ def render_report(result: dict[str, Any], plan: dict[str, Any], target_override:
         for finding in findings[:10]:
             lines.extend(render_finding(finding))
     else:
-        lines.append("No findings against the selected security-suite control set.")
+        lines.append("No findings against the selected hacker control set.")
 
     lines.extend(["", "## Per-Skill Detail", ""])
     if run_log:
