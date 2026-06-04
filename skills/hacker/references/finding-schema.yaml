@@ -60,7 +60,7 @@
       "note": "authz-security, ci-cd-security, supply-chain-security, recon-security, and vulnerability-triage should emit this normalized shape directly when used inside hacker."
     },
     "offensive-security": {
-      "note": "Confirmed vulnerability outcomes use outcome, evidence, negative_control, blast_radius, remediation_priority from validator JSON; link via parent_finding_id to hacker finding id."
+      "note": "Instruction-only autoresearch outputs should be agent-written confirmed vulnerability entries with outcome, evidence summary, negative_control, blast_radius, remediation_priority, and links back to parent hacker finding ids."
     }
   },
   "dedupe_rules": {

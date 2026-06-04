@@ -116,24 +116,32 @@ Clean report rule:
 
 If no findings remain after confirmation, say "No findings against the selected hacker control set." Also state which skills ran and what static analysis cannot prove.
 
-## Phase 6 - Offensive Validation (optional, **last**)
+## Phase 6 - Offensive Autoresearch (optional, **last**)
 
-Run **after** Phases 3, 4, and 5 — when `post_audit_skills` includes `offensive-security`, the user requests exploit validation, and `scope.yaml` is available. Use `deduped-findings.json` from Phase 3, not pre-dedupe scanner JSON.
+Run **after** Phases 3, 4, and 5 — when `post_audit_skills` includes `offensive-security`, the user requests exploit validation, and scope is available. Use `deduped-findings.json` from Phase 3, not pre-dedupe scanner JSON.
+
+`offensive-security` is an instruction-only skill. It ships no scanners, validator scripts, or exploit runners. The parent agent loads `skills/offensive-security/SKILL.md` and coordinates subagents through the autoresearch loop.
 
 Steps:
 
-1. `ingest_findings.py` on `deduped-findings.json`
-2. `hypothesis_generator.py` on normalized output
-3. `validator.py` with `--scope scope.yaml` (or `--dry-run` to document skips)
-4. `reporter.py` for `offensive-security-report-*.md`
+1. Load `skills/offensive-security/SKILL.md` and `references/autoresearch-loop.md`.
+2. Split deduped findings by family: infra/IAM, authz, crypto/secrets, CI/CD, supply chain, injection/deserialization, and chaining.
+3. Launch parallel hypothesis-research subagents for independent families.
+4. Launch validation-planner subagents for top hypotheses.
+5. Execute only scoped, user-approved, non-destructive sandbox checks when necessary.
+6. Launch evidence-review subagents to classify outcomes.
+7. Launch chain-research subagents from confirmed outcomes.
+8. Repeat until no new high-confidence hypotheses remain or the user stops the loop.
+9. Write a confirmed-vulnerabilities report.
 
 Failure handling:
 
 | Condition | Response |
 |---|---|
-| Docker missing | Mark inconclusive/unsafe_to_test; note in hacker appendix |
-| No scope file | Dry-run only; do not probe production |
-| Validator error | Continue; list failed hypothesis ids in appendix |
+| No scope or unclear authorization | Stay in planning mode; mark hypotheses `unsafe_to_test`; do not probe |
+| Validation requires forbidden action | Reject it and document rationale |
+| Subagent disagrees on evidence | Keep `inconclusive` unless success and negative-control evidence are clear |
+| User interrupts loop | Stop, summarize completed rounds, and report residual hypotheses |
 
 Do not merge confirmed offensive findings into executive risk rating without explicit user approval; prefer a separate offensive report section.
 
@@ -152,11 +160,9 @@ Offensive follow-up (agent-run, not orchestrator-built-in):
 
 ```bash
 python3 skills/hacker/scripts/discover.py . --offensive
-python3 skills/offensive-security/scripts/ingest_findings.py deduped-findings.json -o normalized.json
-python3 skills/offensive-security/scripts/hypothesis_generator.py normalized.json -o hypotheses.json
-python3 skills/offensive-security/scripts/validator.py hypotheses.json --scope scope.yaml -o outcomes.json
-python3 skills/offensive-security/scripts/reporter.py outcomes.json -o offensive-security-report.md
 ```
+
+Then load `skills/offensive-security/SKILL.md` and run the subagent autoresearch loop using the deduped findings.
 
 Strict mode should fail when P0 or P1 findings remain. It should not claim model-only skills were run unless their result files are present.
 

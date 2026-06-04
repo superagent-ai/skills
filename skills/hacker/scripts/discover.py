@@ -110,7 +110,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--offensive",
         action="store_true",
-        help="Include offensive-security in plan (requires scope.yaml at validation time)",
+        help="Include offensive-security as the last post-audit, subagent-driven autoresearch phase",
     )
     parser.add_argument("--format", choices=("json", "markdown"), default="json")
     parser.add_argument("--output", help="Write result to this file instead of stdout")
@@ -276,7 +276,7 @@ def build_dispatch_plan(
     post_audit_skills: list[str] = []
     offensive_condition = matrix.get("optional_skill_conditions", {}).get(
         "offensive-security",
-        "requires explicit user request and sandbox scope.yaml",
+        "requires explicit user request and written scope",
     )
     if offensive and "offensive-security" not in excluded:
         post_audit_skills.append("offensive-security")

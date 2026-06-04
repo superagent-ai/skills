@@ -21,7 +21,7 @@ It is a meta-skill (formerly `security-suite`): it discovers the target's attack
 - `skill-security` for skills, plugins, MCP servers, and agent tooling
 - `recon-security` only when a live target is explicitly authorized
 - `vulnerability-triage` only when an advisory or inbound report is supplied
-- `offensive-security` last (Phase 6), only after defensive audit and dedupe, when you request exploit validation with sandbox scope
+- `offensive-security` last (Phase 6), only after defensive audit and dedupe, when you request subagent-driven exploit validation with written scope
 
 ```
 Run a full security audit on this repo
@@ -33,18 +33,18 @@ Validate exploitability of deduped findings with offensive-security
 </details>
 
 <details>
-<summary><b>offensive-security</b>: sandbox validation of defensive findings</summary>
+<summary><b>offensive-security</b>: instruction-only autoresearch loop for defensive findings</summary>
 
 Use it when defensive audits found issues and you need to know which are actually exploitable — bug bounty confirmation, autoresearch attack loops, or prioritizing remediation by exploitability, not CWE severity alone.
 
-It runs an **autoresearch loop**: ingest defensive JSON → hypothesize → sandbox validate → evolve → chain new hypotheses from confirmations → repeat until done. Pair with `hacker` Phase 6 (last). Uses Docker sandboxes, strict scope, rate limits, and a confirmed-vulnerabilities report with safe PoCs and negative controls.
+It is an **instruction-only autoresearch skill**: it tells the agent how to use subagents to ingest defensive JSON, hypothesize, plan scoped sandbox validation, review evidence, evolve, chain new hypotheses from confirmations, and repeat until done. Pair with `hacker` Phase 6 (last). It ships no scripts or validators.
 
-Requires explicit `scope.yaml` for live probes. Never attacks production by default. Pair with `hacker` Phase 6 or run standalone on `deduped-findings.json`.
+Requires explicit written scope for validation. Never attacks production by default. Pair with `hacker` Phase 6 after `deduped-findings.json` exists.
 
 ```
 Validate these defensive findings: deduped-findings.json
 Can any of these issues actually be exploited?
-Autonomous attack loop on deduped findings with scope.yaml
+Autonomous attack loop on deduped findings with subagents
 ```
 
 </details>
@@ -260,7 +260,7 @@ Once installed, skills load on their own when a task matches — nothing to reme
 ```
 skills/
   hacker/                 SKILL.md + scripts/ (orchestration helpers) + references/
-  offensive-security/     SKILL.md + scripts/ + references/
+  offensive-security/     SKILL.md + references/ (instruction-only)
   ci-cd-security/         SKILL.md + references/
   skill-security/         SKILL.md + scripts/ (scanner) + rules/ (YARA) + references/
   authz-security/         SKILL.md + references/

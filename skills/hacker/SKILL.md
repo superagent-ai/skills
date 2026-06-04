@@ -1,15 +1,15 @@
 ---
 name: hacker
-description: Orchestrate a full security audit (defensive read-only review plus optional offensive validation) by discovering attack surface, dispatching specialist security skills, deduplicating findings, and producing one executive report. Use when the user asks for a full security audit, security posture assessment, hacker audit, pre-production security review, autoresearch security loop, multi-skill security review, or what is the security state of this codebase. Coordinates authz-security, crypto-secrets, ci-cd-security, supply-chain-security, infra-security, skill-security, recon-security when explicitly in scope, vulnerability-triage when an advisory is supplied, and offensive-security when the user requests sandbox exploit validation with scope.
+description: Orchestrate a full security audit (defensive read-only review plus optional instruction-only offensive autoresearch) by discovering attack surface, dispatching specialist security skills, deduplicating findings, and producing one executive report. Use when the user asks for a full security audit, security posture assessment, hacker audit, pre-production security review, autoresearch security loop, multi-skill security review, or what is the security state of this codebase. Coordinates authz-security, crypto-secrets, ci-cd-security, supply-chain-security, infra-security, skill-security, recon-security when explicitly in scope, vulnerability-triage when an advisory is supplied, and offensive-security when the user requests subagent-driven exploitability research with scope.
 ---
 
 # Hacker
 
-Hacker is the unified security orchestrator (formerly `security-suite`). It maps the target, runs defensive specialists, merges findings, and optionally chains `offensive-security` to validate exploitability in sandboxes.
+Hacker is the unified security orchestrator (formerly `security-suite`). It maps the target, runs defensive specialists, merges findings, and optionally chains `offensive-security` as an instruction-only subagent autoresearch loop.
 
 **Defensive default:** read-only, offline, no source edits, no live exploit attempts, no credential validation against production.
 
-**Offensive optional:** sandbox validation only with explicit user request and `scope.yaml`.
+**Offensive optional:** subagent-driven autoresearch only with explicit user request and scope.
 
 ## Workflow
 
@@ -68,25 +68,19 @@ python3 skills/hacker/scripts/reporter.py deduped-findings.json --output hacker-
 
 ### Phase 6 - Offensive validation (optional, **last**)
 
-Run **after** Phases 3–5 complete. Requires explicit user request (e.g. validate exploitability, autoresearch attack loop, run offensive-security) **and** `scope.yaml` or confirmed sandbox targets. Input is `deduped-findings.json` from Phase 3 — not raw scanner output.
+Run **after** Phases 3–5 complete. Requires explicit user request (e.g. validate exploitability, autoresearch attack loop, run offensive-security) **and** written scope or confirmed sandbox targets. Input is `deduped-findings.json` from Phase 3 — not raw scanner output.
 
-Prefer the autoresearch runner (ingest → hypothesize → validate → evolve → chain → report):
+`offensive-security` does not provide scripts. Use it as LLM instructions for coordinating subagents:
 
-```bash
-python3 skills/offensive-security/scripts/autoresearch.py deduped-findings.json \
-  --scope scope.yaml --max-rounds 5 --output-dir ./offensive-run
-```
+1. Load `skills/offensive-security/SKILL.md` and `references/autoresearch-loop.md`.
+2. Launch parallel hypothesis-research subagents by finding family (infra, authz, crypto, CI/CD, supply chain, injection, chaining).
+3. Use validation-planner subagents to design scoped sandbox checks and negative controls.
+4. Execute only user-approved, scoped, non-destructive validation steps.
+5. Use evidence-review subagents to classify outcomes.
+6. Launch chain-research subagents only from confirmed outcomes.
+7. Repeat until no new high-confidence hypotheses remain, then write the confirmed-vulnerabilities report.
 
-Or step-by-step:
-
-```bash
-python3 skills/offensive-security/scripts/ingest_findings.py deduped-findings.json --output normalized.json
-python3 skills/offensive-security/scripts/hypothesis_generator.py normalized.json --output hypotheses.json
-python3 skills/offensive-security/scripts/validator.py hypotheses.json --scope scope.yaml --output outcomes.json
-python3 skills/offensive-security/scripts/reporter.py outcomes.json --output offensive-security-report.md
-```
-
-Append confirmed vulnerabilities to the hacker report appendix or deliver as a separate artifact. If Docker or scope is missing, record the skip in the appendix — do not probe production.
+Append confirmed vulnerabilities to the hacker report appendix or deliver as a separate artifact. If scope is missing or validation would require unsafe actions, record `unsafe_to_test` items in the appendix — do not probe production.
 
 **Boundary:** `recon-security` = authorized live pentest. `offensive-security` = sandbox validation of static defensive findings.
 

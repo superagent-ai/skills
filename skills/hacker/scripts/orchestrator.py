@@ -34,9 +34,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--offensive",
         action="store_true",
-        help="Discovery plan includes offensive-security (agent runs validation with --scope)",
+        help="Discovery plan includes offensive-security as the final subagent autoresearch phase",
     )
-    parser.add_argument("--scope", help="Path to scope.yaml for offensive-security (documented for agent; not executed here)")
+    parser.add_argument("--scope", help="Scope summary/path for offensive-security (documented for agent; not executed here)")
     parser.add_argument("--findings", nargs="*", default=[], help="Child skill JSON outputs to merge")
     parser.add_argument("--plan-output", help="Write discovery plan JSON to this path")
     parser.add_argument("--deduped-output", help="Write deduplicated JSON to this path")
