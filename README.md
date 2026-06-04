@@ -7,11 +7,11 @@ Each skill ships in the open [Agent Skills](https://agentskills.io/) format and 
 ## Skills
 
 <details>
-<summary><b>security-suite</b>: unified security audit orchestrator</summary>
+<summary><b>hacker</b>: unified security audit orchestrator</summary>
 
 Use it when you need a full repository security baseline, pre-production review, compliance-oriented report, or one answer to "what is the security posture of this codebase?"
 
-It is a meta-skill: it discovers the target's attack surface, selects the relevant specialist skills, coordinates parallel reviews where possible, deduplicates findings, normalizes severity, and emits one executive report. It does not replace the specialists; it routes to them and preserves their evidence. It coordinates:
+It is a meta-skill (formerly `security-suite`): it discovers the target's attack surface, selects the relevant specialist skills, coordinates parallel reviews where possible, deduplicates findings, normalizes severity, and emits one executive report. Optionally chains `offensive-security` when you want sandbox exploit validation of defensive findings. It coordinates:
 
 - `authz-security` for authorization and multi-tenant access control
 - `crypto-secrets` for hardcoded secrets, weak crypto, JWT, TLS, and key-management issues
@@ -21,11 +21,30 @@ It is a meta-skill: it discovers the target's attack surface, selects the releva
 - `skill-security` for skills, plugins, MCP servers, and agent tooling
 - `recon-security` only when a live target is explicitly authorized
 - `vulnerability-triage` only when an advisory or inbound report is supplied
+- `offensive-security` last (Phase 6), only after defensive audit and dedupe, when you request exploit validation with sandbox scope
 
 ```
 Run a full security audit on this repo
 Security posture assessment: .
 Pre-production security review with one executive report
+Validate exploitability of deduped findings with offensive-security
+```
+
+</details>
+
+<details>
+<summary><b>offensive-security</b>: sandbox validation of defensive findings</summary>
+
+Use it when defensive audits found issues and you need to know which are actually exploitable — bug bounty confirmation, autoresearch attack loops, or prioritizing remediation by exploitability, not CWE severity alone.
+
+It runs an **autoresearch loop**: ingest defensive JSON → hypothesize → sandbox validate → evolve → chain new hypotheses from confirmations → repeat until done. Pair with `hacker` Phase 6 (last). Uses Docker sandboxes, strict scope, rate limits, and a confirmed-vulnerabilities report with safe PoCs and negative controls.
+
+Requires explicit `scope.yaml` for live probes. Never attacks production by default. Pair with `hacker` Phase 6 or run standalone on `deduped-findings.json`.
+
+```
+Validate these defensive findings: deduped-findings.json
+Can any of these issues actually be exploited?
+Autonomous attack loop on deduped findings with scope.yaml
 ```
 
 </details>
@@ -220,7 +239,8 @@ What's the blast radius if this Terraform is wrong?
 npx skills add superagent-ai/skills
 
 # or pick one
-npx skills add superagent-ai/skills --skill security-suite -a cursor -y
+npx skills add superagent-ai/skills --skill hacker -a cursor -y
+npx skills add superagent-ai/skills --skill offensive-security -a cursor -y
 npx skills add superagent-ai/skills --skill ci-cd-security -a cursor -y
 npx skills add superagent-ai/skills --skill skill-security -a cursor -y
 npx skills add superagent-ai/skills --skill authz-security -a cursor -y
@@ -233,11 +253,14 @@ npx skills add superagent-ai/skills --skill infra-security -a cursor -y
 
 Once installed, skills load on their own when a task matches — nothing to remember or invoke by hand.
 
+**Migration:** `security-suite` was renamed to `hacker`. Use `--skill hacker` instead of `--skill security-suite`.
+
 ## Repo layout
 
 ```
 skills/
-  security-suite/         SKILL.md + scripts/ (orchestration helpers) + references/
+  hacker/                 SKILL.md + scripts/ (orchestration helpers) + references/
+  offensive-security/     SKILL.md + scripts/ + references/
   ci-cd-security/         SKILL.md + references/
   skill-security/         SKILL.md + scripts/ (scanner) + rules/ (YARA) + references/
   authz-security/         SKILL.md + references/

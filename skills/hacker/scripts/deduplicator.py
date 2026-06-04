@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-security-suite finding normalizer and deduplicator.
+hacker finding normalizer and deduplicator.
 
 Accepts JSON outputs from child skills or normalized finding lists, adapts common
 scanner schemas, merges overlapping findings, and emits a suite-level result.
@@ -58,7 +58,7 @@ PIPELINE_SKILLS = {"ci-cd-security", "supply-chain-security"}
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Normalize and deduplicate security-suite findings")
+    parser = argparse.ArgumentParser(description="Normalize and deduplicate hacker findings")
     parser.add_argument("inputs", nargs="*", help="JSON result files. Reads stdin when omitted.")
     parser.add_argument("--output", help="Write JSON result to this file")
     parser.add_argument("--format", choices=("json", "markdown"), default="json")
@@ -71,7 +71,7 @@ def main(argv: list[str] | None = None) -> int:
     adjusted, adjustment_log = apply_context_scoring(deduped)
     adjusted = sorted(adjusted, key=finding_sort_key)
     result = {
-        "tool": "security-suite-deduplicator",
+        "tool": "hacker-deduplicator",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "summary": summarize(adjusted),
         "findings": adjusted,
@@ -136,9 +136,20 @@ def source_from_doc(doc: dict[str, Any]) -> str:
     path = doc.get("_input_path")
     if path:
         name = Path(path).stem
-        for known in ("crypto-secrets", "infra-security", "skill-security", "authz-security", "ci-cd-security", "supply-chain-security", "recon-security", "vulnerability-triage"):
+        for known in (
+            "crypto-secrets",
+            "infra-security",
+            "skill-security",
+            "authz-security",
+            "ci-cd-security",
+            "supply-chain-security",
+            "recon-security",
+            "vulnerability-triage",
+            "hacker",
+            "security-suite",
+        ):
             if known in name:
-                return known
+                return "hacker" if known == "security-suite" else known
     return "unknown"
 
 

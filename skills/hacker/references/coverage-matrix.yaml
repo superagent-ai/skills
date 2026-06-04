@@ -5,6 +5,7 @@
   "optional_skill_conditions": {
     "recon-security": "Requires explicit live domain/IP scope plus authorization and rules of engagement.",
     "vulnerability-triage": "Requires a supplied advisory, CVE/GHSA, bug bounty report, or researcher submission.",
+    "offensive-security": "Phase 6 only — runs last after all defensive skills, dedupe, and hacker report. Requires deduplicated findings JSON, explicit user request, and sandbox scope.yaml.",
     "infra-security": "Runs when infrastructure files are present.",
     "skill-security": "Runs when agent skills, MCP servers, plugins, or agent extension code are present."
   },
@@ -23,21 +24,21 @@
       "description": "REST, GraphQL, RPC, or server-rendered API application.",
       "signals": ["routes/", "controllers/", "resolvers/", "api/", "server.ts", "server.js", "app.py", "main.py", "manage.py", "src/main/java/"],
       "skills": ["authz-security", "crypto-secrets", "supply-chain-security"],
-      "optional_skills": ["ci-cd-security", "infra-security", "skill-security", "recon-security", "vulnerability-triage"],
+      "optional_skills": ["ci-cd-security", "infra-security", "skill-security", "recon-security", "vulnerability-triage", "offensive-security"],
       "excluded_skills": []
     },
     "spa_frontend": {
       "description": "Single-page or static frontend with no obvious backend code.",
       "signals": ["vite.config.ts", "vite.config.js", "next.config.js", "nuxt.config.js", "angular.json", "public/", "static/", "src/App.tsx", "src/App.jsx"],
       "skills": ["crypto-secrets", "supply-chain-security"],
-      "optional_skills": ["ci-cd-security", "infra-security", "recon-security", "vulnerability-triage"],
+      "optional_skills": ["ci-cd-security", "infra-security", "recon-security", "vulnerability-triage", "offensive-security"],
       "excluded_skills": ["authz-security"]
     },
     "full_stack": {
       "description": "Monorepo containing frontend and backend application surfaces.",
       "signals": ["apps/", "packages/", "frontend/", "backend/", "client/", "server/", "api/", "web/"],
       "skills": ["authz-security", "crypto-secrets", "supply-chain-security"],
-      "optional_skills": ["ci-cd-security", "infra-security", "skill-security", "recon-security", "vulnerability-triage"],
+      "optional_skills": ["ci-cd-security", "infra-security", "skill-security", "recon-security", "vulnerability-triage", "offensive-security"],
       "excluded_skills": []
     },
     "library_package": {
@@ -65,7 +66,7 @@
       "description": "Infrastructure-as-code repository with little or no application source.",
       "signals": ["*.tf", "*.tfvars", "*.hcl", "cloudformation/", "template.yaml", "template.yml", "k8s/", "kubernetes/", "helm/", "charts/", "Dockerfile", "docker-compose.yml"],
       "skills": ["infra-security", "crypto-secrets"],
-      "optional_skills": ["ci-cd-security", "supply-chain-security", "recon-security", "vulnerability-triage"],
+      "optional_skills": ["ci-cd-security", "supply-chain-security", "recon-security", "vulnerability-triage", "offensive-security"],
       "excluded_skills": ["authz-security"]
     },
     "agent_plugin": {
