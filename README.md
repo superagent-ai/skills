@@ -142,6 +142,30 @@ Reproduce and score this GitHub advisory: GHSA-xxxx
 
 </details>
 
+<details>
+<summary><b>infra-security</b>: misconfigurations in your Terraform, Kubernetes, CloudFormation, and Docker</summary>
+
+Use it when you're about to apply a Terraform plan, reviewing a PR that changes K8s/Helm manifests or a Dockerfile, checking CloudFormation before deploy, or prepping for a SOC-2 / PCI-DSS / ISO-27001 audit — anywhere you need to answer "what's the blast radius if this infra is wrong?"
+
+It runs in two stages, like `skill-security`. A deterministic, dependency-free scanner (`scripts/scan.py` — pure stdlib, no `pip install`, no `hcl2`/`pyyaml`) does the high-recall first pass over every `.tf`/`.yaml`/`Dockerfile` with `file:line` anchors and a CI-friendly exit code; then the model adds the judgment a regex can't — blast radius, cross-resource chains, and false-positive suppression. Every finding comes with a severity (P0–P3) and a corrected snippet. It catches:
+
+- Network — security groups open to `0.0.0.0/0` on SSH/RDP/database ports, all-ports ingress, unrestricted egress
+- IAM — wildcard `Action`/`Resource`, `*` principals on resource and KMS policies, `PassRole` on `*`, over-broad roles on compute
+- Storage — public S3 ACLs, missing public-access-block, encryption-at-rest disabled (S3/EBS/RDS)
+- Containers — privileged/root pods, host namespaces, the Docker socket mounted in, `:latest` images, missing limits
+- Secrets — plaintext credentials in variables/env/ConfigMaps, missing TLS, plaintext-HTTP endpoints
+
+Rules track the CIS Benchmarks, AWS Well-Architected, and the Kubernetes Pod Security Standards — applied as a source read rather than another scanner to wire up.
+
+```
+Audit this Terraform for security issues: <dir>
+Review these Kubernetes manifests before deploy: <dir>
+Check this CloudFormation for public S3 buckets: <file>
+What's the blast radius if this Terraform is wrong?
+```
+
+</details>
+
 ## Install
 
 ```bash
@@ -155,6 +179,7 @@ npx skills add superagent-ai/skills --skill authz-security -a cursor -y
 npx skills add superagent-ai/skills --skill recon-security -a cursor -y
 npx skills add superagent-ai/skills --skill supply-chain-security -a cursor -y
 npx skills add superagent-ai/skills --skill vulnerability-triage -a cursor -y
+npx skills add superagent-ai/skills --skill infra-security -a cursor -y
 ```
 
 Once installed, skills load on their own when a task matches — nothing to remember or invoke by hand.
@@ -169,6 +194,7 @@ skills/
   recon-security/         SKILL.md + references/
   supply-chain-security/  SKILL.md + references/
   vulnerability-triage/   SKILL.md + references/
+  infra-security/         SKILL.md + scripts/ (scanner) + references/
 ```
 
 A skill is a `SKILL.md` (the agent's instructions) plus optional `references/`, `scripts/`, and `rules/`.
