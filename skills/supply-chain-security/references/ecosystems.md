@@ -12,13 +12,13 @@ Commands marked "registry" reach the public registry/OSV with package data only 
 
 ## npm / pnpm / yarn (JavaScript)
 
-**Install hooks:** `preinstall`, `install`, `postinstall`, `prepare` in `package.json` `scripts`. `preinstall` runs before tooling can intervene (Shai-Hulud 2.0's choice). Transitive dependencies' hooks run too.
+**Install hooks:** `preinstall`, `install`, `postinstall`, `prepare` in `package.json` `scripts`. `preinstall` runs before tooling can intervene (Shai-Hulud 2.0's choice). Transitive dependencies' hooks run too. Also **`binding.gyp`**: when present, npm invokes **`node-gyp`** to build a native addon — this runs **outside** lifecycle scripts and is **not** blocked by `ignore-scripts=true`. The June 2026 binding.gyp worm hides execution in shell expansion inside `sources` instead of `package.json` scripts.
 
 **Pinning & lock:** ranges (`^1.2.3`, `~1.2.3`, `*`, `latest`) resolve to whatever the registry serves; pin exact (`1.2.3`). The lockfile (`package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`) pins the full tree with `integrity` (`sha512:`). Enforce it: `npm ci`, `pnpm i --frozen-lockfile`, `yarn install --immutable`. A lockfile entry with a `resolved` URL but no `integrity` is functionally `latest`.
 
 **Namespace / confusion:** scopes (`@org/pkg`) bind to one registry via `.npmrc` (`@org:registry=https://...`). **Unscoped** internal names are the dependency-confusion target. The `.npmrc` must be committed to the repo, not left in `~`, so a fresh clone can't fall back to the public registry.
 
-**Disable hooks:** `ignore-scripts=true` in `.npmrc`, allowlist the few that need building (pnpm: `onlyBuiltDependencies`).
+**Disable hooks:** `ignore-scripts=true` in `.npmrc`, allowlist the few that need building (pnpm: `onlyBuiltDependencies`). **Caveat:** this does **not** stop a malicious **`binding.gyp`** from invoking `node-gyp` — inspect every new/changed `binding.gyp` and unexpected root `index.js` in the diff.
 
 **Cooldown:** `min-release-age` (npm ≥ 11.10), `minimumReleaseAge` (pnpm, minutes; default on in pnpm 11), `npmMinimalAgeGate` (Yarn). Dependabot/Renovate have their own `cooldown` / `minimumReleaseAge`.
 
@@ -26,7 +26,7 @@ Commands marked "registry" reach the public registry/OSV with package data only 
 
 **Registry checks:** `npm view <pkg> time` (recency), `npm view <pkg> maintainers dist.integrity`, `osv-scanner --lockfile=package-lock.json`.
 
-**Bug to flag:** a `preinstall`/`postinstall` doing network/secret/obfuscated work; `setup_bun.js` + `bun_environment.js` or `telemetry.js`; a range or missing lockfile; an unscoped internal name; a lockfile entry with no `integrity`.
+**Bug to flag:** a `preinstall`/`postinstall` doing network/secret/obfuscated work; a **`binding.gyp`** with shell expansion in `sources` or a `type: "none"` fake native target; `setup_bun.js` + `bun_environment.js`, `telemetry.js`, or a malicious `binding.gyp` + root `index.js`; a range or missing lockfile; an unscoped internal name; a lockfile entry with no `integrity`.
 
 ---
 

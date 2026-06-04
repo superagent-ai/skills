@@ -103,7 +103,7 @@ Use it when you're adding or upgrading a dependency, reviewing a PR that changes
 
 It reads your manifests, lockfiles, install scripts, and dependency diffs offline — across npm/pnpm/yarn, PyPI, Go, Cargo, RubyGems, Maven/Gradle, NuGet, and Composer — and reports each risk at `file:line` with a concrete fix. No install, no execution, no phoning home. Every finding comes with a severity (P0–P3). It catches:
 
-- Malicious install scripts — `preinstall`/`postinstall` hooks that harvest and exfiltrate secrets (the Shai-Hulud and nx `s1ngularity` worm pattern)
+- Malicious install scripts — `preinstall`/`postinstall` hooks that harvest and exfiltrate secrets (the Shai-Hulud and nx `s1ngularity` worm pattern), and **`binding.gyp`/`node-gyp` execution** that bypasses lifecycle-script scanners (June 2026 worm)
 - Obfuscated payloads, credential harvesting, exfiltration, persistence, and worm self-propagation
 - Typosquatting and slopsquatting (AI-hallucinated package names) of real dependencies
 - Dependency / namespace confusion — unscoped internal names a public registry can hijack
@@ -115,6 +115,29 @@ Rules track the consensus from OpenSSF, OSV, Socket, Datadog, and the 2025 npm w
 Is this dependency safe to add?
 Review this PR's package.json and lockfile changes for supply-chain risks
 Check this package's postinstall script for Shai-Hulud / credential theft
+```
+
+</details>
+
+<details>
+<summary><b>vulnerability-triage</b>: is this advisory a real finding, by-design, or noise?</summary>
+
+Use it when a GitHub Advisory (GHSA/CVE) lands against a dependency, a bug bounty or HackerOne/Bugcrowd/Intigriti report hits your inbox, or a researcher files an issue — anywhere you need to answer "is this real, by-design, or noise?"
+
+It reads the report offline, cross-references the project's documented intent — `SECURITY.md`, README, code comments, closed issues, changelog — statically audits any PoC without executing it, and emits a structured markdown triage report. No Docker, no network, no PoC execution. Every verdict comes with a severity (P0–P3 / Informational / By-Design) and a recommended action. It catches:
+
+- By-design behavior dressed up as a vuln — CORS preflight, documented rate limits, intentional public assets, debug verbosity, admin-only features
+- Unreproduced or theoretical claims — gated to Informational until a PoC is confirmed
+- Reporter severity inflation — scored independently from reproduced evidence
+- Verdict-steering and prompt-injection attempts inside the report itself
+- The real-bug twin of each by-design pattern, so genuine findings aren't waved through
+
+Reproduction is model-audited and user-run: the model inspects the PoC for dangerous behavior and hands you safe, pinned-version steps to run in your own sandbox.
+
+```
+Triage this vulnerability report: <URL or file>
+Is this advisory a real finding or by-design?
+Reproduce and score this GitHub advisory: GHSA-xxxx
 ```
 
 </details>
@@ -131,6 +154,7 @@ npx skills add superagent-ai/skills --skill skill-security -a cursor -y
 npx skills add superagent-ai/skills --skill authz-security -a cursor -y
 npx skills add superagent-ai/skills --skill recon-security -a cursor -y
 npx skills add superagent-ai/skills --skill supply-chain-security -a cursor -y
+npx skills add superagent-ai/skills --skill vulnerability-triage -a cursor -y
 ```
 
 Once installed, skills load on their own when a task matches — nothing to remember or invoke by hand.
@@ -144,6 +168,7 @@ skills/
   authz-security/         SKILL.md + references/
   recon-security/         SKILL.md + references/
   supply-chain-security/  SKILL.md + references/
+  vulnerability-triage/   SKILL.md + references/
 ```
 
 A skill is a `SKILL.md` (the agent's instructions) plus optional `references/`, `scripts/`, and `rules/`.

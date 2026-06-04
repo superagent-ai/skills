@@ -7,7 +7,7 @@ When a pass flags a risk, the user wants the safe way to add or manage the depen
 A new dependency is the highest-risk moment. Walk it:
 
 1. **Confirm identity.** Is the name exactly the real package (not a typo, not an AI-hallucinated near-match)? Is it scoped to the org you expect? `npm view <pkg>` — does it exist, who maintains it, how old is it?
-2. **Read the install scripts.** `npm view <pkg> scripts` (or open `package.json` in the tarball). A `preinstall`/`postinstall` is a yellow flag; one doing network/secret/obfuscated work is a stop.
+2. **Read the install scripts — and `binding.gyp`.** `npm view <pkg> scripts` (or open `package.json` in the tarball). A `preinstall`/`postinstall` is a yellow flag; one doing network/secret/obfuscated work is a stop. Also check for **`binding.gyp`**: a package with no legitimate native code should not have one, and any `sources` entry with shell expansion is a stop.
 3. **Wait out a cooldown.** Don't install a version published hours ago. Most malware is caught within 24–48h, so a delay filters the smash-and-grab campaigns for free (next entry).
 4. **Pin and lock.** Add it at an exact version, commit the lockfile, install with the frozen command.
 5. **Scan.** `osv-scanner` / `npm audit signatures` against the lockfile, and a behavioral check (Socket/Snyk) if available.
@@ -45,7 +45,7 @@ Then allowlist only the packages that genuinely need to build a native binary:
 "pnpm": { "onlyBuiltDependencies": ["esbuild", "sharp", "node-gyp"] }
 ```
 
-This is the single highest-leverage control for npm: it neutralizes the entire `preinstall`/`postinstall` worm class (Shai-Hulud, s1ngularity) on dev machines and in CI. The cost is maintaining a short allowlist of packages with legitimate build steps. Equivalents elsewhere: review `setup.py`/`build.rs`/Composer `scripts` before first install; prefer wheels over sdists on PyPI so nothing runs at install time.
+This is the single highest-leverage control for npm: it neutralizes the **`preinstall`/`postinstall` worm class** (Shai-Hulud, s1ngularity) on dev machines and in CI. **It does not block the binding.gyp worm** — that path runs via `node-gyp`, not lifecycle scripts — so pair `ignore-scripts` with diff review for unexpected `binding.gyp` files and multi-megabyte root `index.js`. The cost is maintaining a short allowlist of packages with legitimate build steps. Equivalents elsewhere: review `setup.py`/`build.rs`/Composer `scripts` before first install; prefer wheels over sdists on PyPI so nothing runs at install time.
 
 ## "I want internal package names that can't be hijacked (dependency confusion)"
 

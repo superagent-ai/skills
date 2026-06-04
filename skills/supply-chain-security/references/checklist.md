@@ -14,8 +14,9 @@ A flat checklist for vetting a dependency, reviewing a PR that changes dependenc
 ### Install-time behavior
 
 - [ ] Lifecycle hooks reviewed: npm `preinstall`/`install`/`postinstall`/`prepare`, PyPI `setup.py`/build hooks, Cargo `build.rs`, RubyGems native ext, Composer `scripts`
+- [ ] **`binding.gyp` reviewed** when present: legitimate native addon only; no shell expansion in `sources` (`$()`, backticks, redirection); no `type: "none"` target whose only job is to run a command; no unexpected multi-megabyte root `index.js` alongside it
 - [ ] Any install script does **only** a legitimate platform build into its own directory — no network to non-registry hosts, no env/secret reads, no writes outside the package, no shell spawn, no AI-CLI invocation, no alternate-runtime (Bun) install
-- [ ] No campaign-marker files present (see appendix): `setup_bun.js`, `bun_environment.js`, `bun_installer.js`, `environment_source.js`, `telemetry.js`
+- [ ] No campaign-marker files present (see appendix): `setup_bun.js`, `bun_environment.js`, `bun_installer.js`, `environment_source.js`, `telemetry.js`, malicious **`binding.gyp`** + root **`index.js`**
 
 ### Payload (when source is available)
 
@@ -99,6 +100,14 @@ These are concrete indicators from real campaigns. They are the **perishable lay
 - **Weaponized local AI CLIs** (`claude`, `gemini`, `q`) with `--dangerously-skip-permissions` / `--yolo` / `--trust-all-tools` to inventory secrets
 - Exfiltrates triple-base64 `results.b64` to a public repo named `s1ngularity-repository-*`; appended a shutdown to `~/.bashrc`/`~/.zshrc`
 - Root cause: a GitHub Actions injection that stole the npm publish token
+
+**binding.gyp worm (npm, June 2026):**
+- Vector: a tiny **`binding.gyp`** (~100 bytes) that triggers **`node-gyp`** during `npm install` — **no `preinstall`/`postinstall` in `package.json`**, so script-focused scanners and `ignore-scripts=true` miss it
+- Shell expansion in `sources`: `"< $(node index.js >/dev/null) >/dev/null 2>&1 && echo stub.c)"` with `target_name: "Setup"`, `type: "none"` — runs root **`index.js`** (4.5–4.9 MB obfuscated) silently
+- Staged payload: ROT-N Caesar decode → AES-128-GCM encrypted blobs → downloads **Bun v1.3.13** from GitHub → ~720 KB worm via Bun (outside Node's process tree)
+- Behavior: harvests npm/GitHub/AWS/GCP/Azure/HashiCorp Vault/Kubernetes/RubyGems tokens, 1Password CLI/gopass/pass, and **masked GitHub Actions runner secrets from process memory**; **injects `setup-bun` + payload steps into GitHub Actions workflows**; republishes poisoned versions of the victim's npm/RubyGems packages (self-propagating worm); exfiltrates via **dangling GitHub commits** (RSA-encrypted, not reachable from any branch)
+- Families hit (June 3–4, 2026 — list still growing): `@vapi-ai/server-sdk`, `ai-sdk-ollama`, `autotel*` / `awaitly*` / `executable-stories*` / `node-env-resolver*`, `@jagreehal/workflow`, `@evolvconsulting/evolv-coder-lite`, `wrangler-deploy`, and dozens more — see [StepSecurity's post](https://www.stepsecurity.io/blog/binding-gyp-npm-supply-chain-attack-spreads-like-worm) for the full IOC table
+- Lesson: review **`binding.gyp`** and unexpected root **`index.js`** on every dependency diff, not just `package.json` scripts; `ignore-scripts` alone is not enough
 
 **`chalk` / `debug` "Qix" compromise (npm, Sept 2025):**
 - 18 packages (`chalk`, `debug`, `ansi-styles`, `strip-ansi`, `supports-color`, `color-convert`, …), ~2B weekly downloads, live ~2.5h
