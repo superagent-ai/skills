@@ -1,6 +1,20 @@
 ---
 name: crypto-secrets
-description: Audit application source code and configuration for cryptography and secrets hygiene issues: hardcoded API keys, committed .env files, private keys, weak hashes, insecure encryption modes, unsafe randomness, bad KDF/password hashing, JWT signing mistakes, disabled TLS verification, and dangerous serialization. Runs a dependency-free offline scanner for high-recall findings, then the model confirms impact and writes concrete fixes with redacted evidence. Use when reviewing app code that handles encryption, tokens, sessions, certificates, or credentials; when asked to scan for hardcoded secrets, exposed API keys, weak crypto, AES-ECB/CBC misuse, MD5/SHA1 password hashing, insecure random tokens, verify=False, InsecureSkipVerify, rejectUnauthorized false, alg none JWTs, or committed private keys. Not for Terraform/Kubernetes-only audits (use infra-security), package install-hook risk (use supply-chain-security), or vetting an agent skill before install (use skill-security).
+description: >-
+  Audit application source code and configuration for cryptography and secrets
+  hygiene issues: hardcoded API keys, committed .env files, private keys, weak
+  hashes, insecure encryption modes, unsafe randomness, bad KDF/password
+  hashing, JWT signing mistakes, disabled TLS verification, and dangerous
+  serialization. Runs a dependency-free offline scanner for high-recall
+  findings, then the model confirms impact and writes concrete fixes with
+  redacted evidence. Use when reviewing app code that handles encryption,
+  tokens, sessions, certificates, or credentials; when asked to scan for
+  hardcoded secrets, exposed API keys, weak crypto, AES-ECB/CBC misuse,
+  MD5/SHA1 password hashing, insecure random tokens, verify=False,
+  InsecureSkipVerify, rejectUnauthorized false, alg none JWTs, or committed
+  private keys. Not for Terraform/Kubernetes-only audits (use infra-security),
+  package install-hook risk (use supply-chain-security), or vetting an agent
+  skill before install (use skill-security).
 ---
 
 # Cryptography and Secrets Hygiene
