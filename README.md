@@ -7,6 +7,30 @@ Each skill ships in the open [Agent Skills](https://agentskills.io/) format and 
 ## Skills
 
 <details>
+<summary><b>security-suite</b>: unified security audit orchestrator</summary>
+
+Use it when you need a full repository security baseline, pre-production review, compliance-oriented report, or one answer to "what is the security posture of this codebase?"
+
+It is a meta-skill: it discovers the target's attack surface, selects the relevant specialist skills, coordinates parallel reviews where possible, deduplicates findings, normalizes severity, and emits one executive report. It does not replace the specialists; it routes to them and preserves their evidence. It coordinates:
+
+- `authz-security` for authorization and multi-tenant access control
+- `crypto-secrets` for hardcoded secrets, weak crypto, JWT, TLS, and key-management issues
+- `ci-cd-security` for GitHub Actions and release pipeline risk
+- `supply-chain-security` for dependency and install-time compromise risk
+- `infra-security` for Terraform, Kubernetes, CloudFormation, Docker, and Compose
+- `skill-security` for skills, plugins, MCP servers, and agent tooling
+- `recon-security` only when a live target is explicitly authorized
+- `vulnerability-triage` only when an advisory or inbound report is supplied
+
+```
+Run a full security audit on this repo
+Security posture assessment: .
+Pre-production security review with one executive report
+```
+
+</details>
+
+<details>
 <summary><b>ci-cd-security</b>: supply-chain and pwn-request bugs in GitHub Actions</summary>
 
 Use it when you're reviewing `.github/workflows/`, hardening a release pipeline, or chasing `pull_request_target`, template injection, action pinning, or cache poisoning.
@@ -196,6 +220,7 @@ What's the blast radius if this Terraform is wrong?
 npx skills add superagent-ai/skills
 
 # or pick one
+npx skills add superagent-ai/skills --skill security-suite -a cursor -y
 npx skills add superagent-ai/skills --skill ci-cd-security -a cursor -y
 npx skills add superagent-ai/skills --skill skill-security -a cursor -y
 npx skills add superagent-ai/skills --skill authz-security -a cursor -y
@@ -212,6 +237,7 @@ Once installed, skills load on their own when a task matches — nothing to reme
 
 ```
 skills/
+  security-suite/         SKILL.md + scripts/ (orchestration helpers) + references/
   ci-cd-security/         SKILL.md + references/
   skill-security/         SKILL.md + scripts/ (scanner) + rules/ (YARA) + references/
   authz-security/         SKILL.md + references/
