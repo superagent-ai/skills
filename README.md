@@ -143,6 +143,29 @@ Reproduce and score this GitHub advisory: GHSA-xxxx
 </details>
 
 <details>
+<summary><b>crypto-secrets</b>: hardcoded secrets and broken cryptography in application code</summary>
+
+Use it when you're reviewing source that handles credentials, encryption, JWTs, TLS clients, sessions, or password hashing — anywhere you need to answer "are we leaking secrets or relying on broken crypto?"
+
+It runs in two stages, like `infra-security` and `skill-security`. A deterministic, dependency-free scanner (`scripts/scan.py` — pure stdlib, no network, no `pip install`) finds high-signal candidates with `file:line` anchors; then the model confirms impact, suppresses fixtures/placeholders, redacts secret values, and writes concrete fixes. It catches:
+
+- Exposed credentials — API keys, OAuth/Bearer tokens, Slack/GitHub/Stripe keys, database URLs, PEM private keys, committed `.env` values
+- Weak crypto — MD5/SHA1 password hashing, DES/3DES/RC4, AES-ECB, CBC/CTR without authentication, static IVs/nonces
+- Token and transport bugs — weak token randomness, hardcoded JWT secrets, `alg: none`, missing `exp`, disabled TLS verification, SSL/TLS 1.0/1.1
+- Key-management and serialization risks — hardcoded encryption keys, private keys in source, unsafe `pickle`/`yaml.load`
+
+Rules track OWASP, NIST, CWE, and language-specific crypto guidance — applied as an offline source read rather than a live credential validator.
+
+```
+Audit this repo for hardcoded secrets and weak crypto
+Scan for exposed API keys in this codebase
+Review JWT handling for algorithm confusion or weak secrets
+Find verify=False / InsecureSkipVerify / rejectUnauthorized false
+```
+
+</details>
+
+<details>
 <summary><b>infra-security</b>: misconfigurations in your Terraform, Kubernetes, CloudFormation, and Docker</summary>
 
 Use it when you're about to apply a Terraform plan, reviewing a PR that changes K8s/Helm manifests or a Dockerfile, checking CloudFormation before deploy, or prepping for a SOC-2 / PCI-DSS / ISO-27001 audit — anywhere you need to answer "what's the blast radius if this infra is wrong?"
@@ -179,6 +202,7 @@ npx skills add superagent-ai/skills --skill authz-security -a cursor -y
 npx skills add superagent-ai/skills --skill recon-security -a cursor -y
 npx skills add superagent-ai/skills --skill supply-chain-security -a cursor -y
 npx skills add superagent-ai/skills --skill vulnerability-triage -a cursor -y
+npx skills add superagent-ai/skills --skill crypto-secrets -a cursor -y
 npx skills add superagent-ai/skills --skill infra-security -a cursor -y
 ```
 
@@ -194,6 +218,7 @@ skills/
   recon-security/         SKILL.md + references/
   supply-chain-security/  SKILL.md + references/
   vulnerability-triage/   SKILL.md + references/
+  crypto-secrets/         SKILL.md + scripts/ (scanner) + references/
   infra-security/         SKILL.md + scripts/ (scanner) + references/
 ```
 
