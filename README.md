@@ -119,6 +119,29 @@ Check this package's postinstall script for Shai-Hulud / credential theft
 
 </details>
 
+<details>
+<summary><b>vulnerability-triage</b>: is this advisory a real finding, by-design, or noise?</summary>
+
+Use it when a GitHub Advisory (GHSA/CVE) lands against a dependency, a bug bounty or HackerOne/Bugcrowd/Intigriti report hits your inbox, or a researcher files an issue — anywhere you need to answer "is this real, by-design, or noise?"
+
+It reads the report offline, cross-references the project's documented intent — `SECURITY.md`, README, code comments, closed issues, changelog — statically audits any PoC without executing it, and emits a structured markdown triage report. No Docker, no network, no PoC execution. Every verdict comes with a severity (P0–P3 / Informational / By-Design) and a recommended action. It catches:
+
+- By-design behavior dressed up as a vuln — CORS preflight, documented rate limits, intentional public assets, debug verbosity, admin-only features
+- Unreproduced or theoretical claims — gated to Informational until a PoC is confirmed
+- Reporter severity inflation — scored independently from reproduced evidence
+- Verdict-steering and prompt-injection attempts inside the report itself
+- The real-bug twin of each by-design pattern, so genuine findings aren't waved through
+
+Reproduction is model-audited and user-run: the model inspects the PoC for dangerous behavior and hands you safe, pinned-version steps to run in your own sandbox.
+
+```
+Triage this vulnerability report: <URL or file>
+Is this advisory a real finding or by-design?
+Reproduce and score this GitHub advisory: GHSA-xxxx
+```
+
+</details>
+
 ## Install
 
 ```bash
@@ -131,6 +154,7 @@ npx skills add superagent-ai/skills --skill skill-security -a cursor -y
 npx skills add superagent-ai/skills --skill authz-security -a cursor -y
 npx skills add superagent-ai/skills --skill recon-security -a cursor -y
 npx skills add superagent-ai/skills --skill supply-chain-security -a cursor -y
+npx skills add superagent-ai/skills --skill vulnerability-triage -a cursor -y
 ```
 
 Once installed, skills load on their own when a task matches — nothing to remember or invoke by hand.
@@ -144,6 +168,7 @@ skills/
   authz-security/         SKILL.md + references/
   recon-security/         SKILL.md + references/
   supply-chain-security/  SKILL.md + references/
+  vulnerability-triage/   SKILL.md + references/
 ```
 
 A skill is a `SKILL.md` (the agent's instructions) plus optional `references/`, `scripts/`, and `rules/`.
