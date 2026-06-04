@@ -1,6 +1,6 @@
 ---
 name: supply-chain-security
-description: Review new or changed dependencies for supply-chain compromise before they enter a project — malicious install scripts (preinstall/postinstall), self-propagating worms (Shai-Hulud), credential harvesting and exfiltration, obfuscated payloads, typosquatting, slopsquatting (AI-hallucinated package names), dependency/namespace confusion, maintainer account takeover, and unpinned or unverified versions. Reads manifests, lockfiles, install scripts, and dependency diffs offline across npm, PyPI, Go, Cargo, RubyGems, Maven, NuGet, and Composer, and reports each risk at file:line with a concrete fix — no install, no execution, no phoning home. Trigger when adding or upgrading a dependency, reviewing a PR that changes package.json / requirements.txt / go.mod / a lockfile, deciding whether a package is safe to install, or when the user mentions Shai-Hulud, a compromised or malicious package, typosquatting, dependency confusion, or asks "is this dependency safe to add?".
+description: Review new or changed dependencies for supply-chain compromise before they enter a project — malicious install scripts (preinstall/postinstall), binding.gyp/node-gyp install-time execution (June 2026 worm), self-propagating worms (Shai-Hulud, binding.gyp), credential harvesting and exfiltration, obfuscated payloads, typosquatting, slopsquatting (AI-hallucinated package names), dependency/namespace confusion, maintainer account takeover, and unpinned or unverified versions. Reads manifests, lockfiles, install scripts, and dependency diffs offline across npm, PyPI, Go, Cargo, RubyGems, Maven, NuGet, and Composer, and reports each risk at file:line with a concrete fix — no install, no execution, no phoning home. Trigger when adding or upgrading a dependency, reviewing a PR that changes package.json / requirements.txt / go.mod / a lockfile, deciding whether a package is safe to install, or when the user mentions Shai-Hulud, binding.gyp, a compromised or malicious package, typosquatting, dependency confusion, or asks "is this dependency safe to add?".
 ---
 
 # Supply-Chain Security Scanner
@@ -16,7 +16,7 @@ A new or changed dependency runs code from a stranger **twice**: once at **insta
 - **Identity — is this the package you meant, from who you think published it?** Defeated by *typosquatting* (a misspelling of a popular name), *slopsquatting* (a plausible name an AI hallucinated and an attacker pre-registered), *dependency / namespace confusion* (an internal name claimed on a public registry), and *maintainer account takeover* (a trusted name, a stolen token).
 - **Behavior — does it do something a library of its stated purpose has no reason to do?** Especially at install time. Defeated by *malicious lifecycle scripts*, *obfuscated payloads*, *credential harvesting*, *exfiltration*, *persistence*, and *self-propagation*.
 
-The **install-time hook is the crown jewel**. It executes before any code review, on developer machines and CI runners, with full environment and token access — which is exactly why every major 2025 worm (Shai-Hulud, the nx `s1ngularity` attack) lives in `preinstall` / `postinstall`. A package can be perfectly functional and still own your machine the instant you install it.
+The **install-time hook is the crown jewel**. It executes before any code review, on developer machines and CI runners, with full environment and token access — which is exactly why every major worm (Shai-Hulud, the nx `s1ngularity` attack, the June 2026 **binding.gyp** campaign) targets install time. Most land in `preinstall` / `postinstall`; the binding.gyp worm bypasses those hooks entirely by tricking `node-gyp` into running arbitrary shell during a fake native build. A package can be perfectly functional and still own your machine the instant you install it.
 
 **When you cannot confirm a package's identity, or cannot explain what its install script does, treat it as untrusted and flag it.** The cost of a false positive is a held PR and a few minutes. The cost of a false negative is every credential on the machine and in CI — and your own packages republished as the next link in the worm. This asymmetry governs every judgment call below.
 
@@ -39,11 +39,26 @@ Before behavior, confirm the name resolves to who you think.
 - **Typosquatting.** A name within a small edit or keyboard distance of a popular package: `crossenv`↔`cross-env`, `reqeusts`↔`requests`, `lodahs`↔`lodash`, `electorn`↔`electron`. Flag any dependency whose name is one transposition/omission/duplication away from a well-known package it is not.
 - **Slopsquatting (AI-hallucinated names).** Roughly **1 in 5 package names suggested by LLMs don't exist**, and the hallucinations repeat — so attackers pre-register the popular ones with malware. Be suspicious of plausible-but-unfamiliar "helper" names (`flask-gpt-helper`, `auth-helper-pro`, `py-openai-utils`, `easy-requests`). If a dependency was added on an AI's suggestion, **confirm the real package exists under that exact name before installing** — do not let a hallucinated import become an install.
 - **Dependency / namespace confusion.** An **unscoped** name that looks internal (`internal-`, `corp-`, `company-`, a product codename) can be hijacked: an attacker publishes the same name publicly with a higher version and wins resolution. Also flag a scope that is *almost* the org's (`@acme-corp` vs `@acme`). The fix is scoped names pinned to the private registry in a committed config — see `references/patterns.md`.
-- **Account-takeover smell.** A long-stable package that suddenly ships an odd version, changes maintainer, **adds an install script it never had**, or whose diff adds files unrelated to its purpose. `chalk`/`debug`, nx, and Shai-Hulud all rode trusted names through phished or stolen tokens. A diff that adds `preinstall` + two new files to a styling library is the shape to fear.
+- **Account-takeover smell.** A long-stable package that suddenly ships an odd version, changes maintainer, **adds an install script it never had**, or whose diff adds files unrelated to its purpose — especially a **`binding.gyp`** or a multi-megabyte root **`index.js`** in a package that has never shipped native code. `chalk`/`debug`, nx, Shai-Hulud, and the binding.gyp worm all rode trusted names through phished or stolen tokens. A diff that adds `preinstall` + two new files to a styling library is the shape to fear; so is a diff that adds `binding.gyp` + `index.js` to a pure-JS library.
 
 ### Pass 2: install-time execution — the crown jewel
 
 Read every lifecycle script. In npm: `preinstall`, `install`, `postinstall`, and `prepare` in `package.json` `scripts`. Equivalents elsewhere: `setup.py` / PEP 517 build hooks (PyPI), native `extconf.rb` (RubyGems), `build.rs` (Cargo). `preinstall` is the loudest signal — Shai-Hulud 2.0 moved there specifically to run **before** any inspection tooling.
+
+Also read **`binding.gyp`** if present. When npm sees one, it invokes **`node-gyp`** to compile what it assumes is a native addon — **even with `ignore-scripts=true`**, because this is not a lifecycle hook. The June 2026 binding.gyp worm keeps `package.json` `scripts` clean and hides execution in a ~100-byte `binding.gyp` that abuses shell expansion in the `sources` array:
+
+```json
+// [P0] binding.gyp worm — node-gyp runs arbitrary shell during "compile"
+{
+  "targets": [{
+    "target_name": "Setup",
+    "type": "none",
+    "sources": ["< $(node index.js >/dev/null) >/dev/null 2>&1 && echo stub.c)"]
+  }]
+}
+```
+
+That silently runs a root-level `index.js` (4.5–4.9 MB obfuscated in known campaigns) during `npm install`. Flag any `binding.gyp` in a package with no legitimate native code, any `sources` entry with `$()`, backticks, or shell redirection, and any `type: "none"` target whose only job is to trigger a command.
 
 Legitimate install scripts exist: `node-gyp`, `esbuild`, `sharp`, `bcrypt`, `playwright` compile or download a **platform binary into the package's own directory**. Distinguish that from a script that:
 
@@ -62,7 +77,7 @@ Legitimate install scripts exist: `node-gyp`, `esbuild`, `sharp`, `bcrypt`, `pla
 }
 ```
 
-The files `setup_bun.js` + `bun_environment.js` (Shai-Hulud 2.0/3.0), `telemetry.js` (s1ngularity), or any install script that installs Bun to run an obfuscated blob are **P0 on sight** — treat the package as compromised, do not install, and rotate any credentials already exposed. See the campaign markers in `references/checklist.md`.
+The files `setup_bun.js` + `bun_environment.js` (Shai-Hulud 2.0/3.0), `telemetry.js` (s1ngularity), a malicious **`binding.gyp`** + root **`index.js`** (binding.gyp worm), or any install path that installs Bun to run an obfuscated blob are **P0 on sight** — treat the package as compromised, do not install, and rotate any credentials already exposed. See the campaign markers in `references/checklist.md`.
 
 ### Pass 3: obfuscation and dynamic code
 
@@ -92,7 +107,7 @@ Where harvested data goes, and how one compromised dependency becomes the next:
 
 ### Pass 6: persistence and sabotage
 
-- **Persistence** beyond the install: edits to `~/.bashrc` / `~/.zshrc`, a registered **self-hosted GitHub Actions runner** (named `SHA1HULUD`) plus a rogue workflow (`discussion.yaml`) for remote command execution, cron, or systemd units.
+- **Persistence** beyond the install: edits to `~/.bashrc` / `~/.zshrc`, a registered **self-hosted GitHub Actions runner** (named `SHA1HULUD`) plus a rogue workflow (`discussion.yaml`) for remote command execution, **injected GitHub Actions workflow steps** (`setup-bun` + payload execution — the binding.gyp worm's CI persistence), cron, or systemd units.
 - **Destructive failsafe.** Shai-Hulud 2.0 attempts to **wipe the user's home directory** (`shred`, `rm -rf $HOME`, `del /F /Q /S`) if it can neither exfiltrate nor propagate. Flag any dependency containing destructive filesystem or shutdown commands.
 - **Protestware.** Sabotage gated on geography or date (e.g. `node-ipc` wiping files for certain locales). A dependency that branches on `process.env.LANG`, a country, or `Date` to do something harmful is a finding even if "only" targeting others.
 
@@ -148,7 +163,7 @@ A clean static read does not prove the installed artifact is safe.
 
 - `references/ecosystems.md` — per-ecosystem facts you need to judge a dependency: where install hooks live, how to pin and lock, the integrity/hash mechanism, namespace/scoping support (so you can call dependency-confusion exposure), the provenance mechanism, and the exact offline-and-registry verification commands — for npm/pnpm/yarn, PyPI, Go, Cargo, RubyGems, Maven/Gradle, NuGet, and Composer.
 - `references/patterns.md` — "I want to add or update a dependency safely" recipes: cooldown windows, lockfile + `npm ci`, `ignore-scripts` with an allowlist, scoped names + registry pinning against dependency confusion, provenance/Trusted-Publisher verification, exact pinning, and isolating CI secrets from install scripts. Read it when proposing the fix.
-- `references/checklist.md` — a flat per-dependency / per-PR-diff / per-repo / per-org checklist with a triage order, plus an appendix of **known-campaign markers** (Shai-Hulud 1/2/3, nx `s1ngularity`, the `chalk`/`debug` compromise). Use it for a full audit, for scanning many dependencies at once, and to match concrete IOCs.
+- `references/checklist.md` — a flat per-dependency / per-PR-diff / per-repo / per-org checklist with a triage order, plus an appendix of **known-campaign markers** (Shai-Hulud 1/2/3, nx `s1ngularity`, the binding.gyp worm, the `chalk`/`debug` compromise). Use it for a full audit, for scanning many dependencies at once, and to match concrete IOCs.
 
 ## What this skill won't do
 

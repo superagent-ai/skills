@@ -103,7 +103,7 @@ Use it when you're adding or upgrading a dependency, reviewing a PR that changes
 
 It reads your manifests, lockfiles, install scripts, and dependency diffs offline — across npm/pnpm/yarn, PyPI, Go, Cargo, RubyGems, Maven/Gradle, NuGet, and Composer — and reports each risk at `file:line` with a concrete fix. No install, no execution, no phoning home. Every finding comes with a severity (P0–P3). It catches:
 
-- Malicious install scripts — `preinstall`/`postinstall` hooks that harvest and exfiltrate secrets (the Shai-Hulud and nx `s1ngularity` worm pattern)
+- Malicious install scripts — `preinstall`/`postinstall` hooks that harvest and exfiltrate secrets (the Shai-Hulud and nx `s1ngularity` worm pattern), and **`binding.gyp`/`node-gyp` execution** that bypasses lifecycle-script scanners (June 2026 worm)
 - Obfuscated payloads, credential harvesting, exfiltration, persistence, and worm self-propagation
 - Typosquatting and slopsquatting (AI-hallucinated package names) of real dependencies
 - Dependency / namespace confusion — unscoped internal names a public registry can hijack
