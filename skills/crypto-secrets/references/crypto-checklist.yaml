@@ -1,0 +1,291 @@
+rules:
+  - id: crypto-md5-password
+    category: Hash
+    title: MD5 used for password or secret hashing
+    severity: P1
+    description: MD5 is fast and collision-prone; it is unsuitable for password hashing or security decisions.
+    languages: [python, javascript, typescript, go, java, ruby, php, c, cpp]
+    bad_patterns: ["md5(", "createHash('md5')", "MessageDigest.getInstance(\"MD5\")"]
+    good_patterns: ["argon2id", "bcrypt", "scrypt", "PBKDF2 with modern iterations"]
+    exclusions: ["checksum", "etag", "content-address", "test fixture"]
+    references: ["https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html"]
+  - id: crypto-sha1-password
+    category: Hash
+    title: SHA1 used for password or secret hashing
+    severity: P1
+    description: SHA1 is deprecated and too fast for password hashing.
+    languages: [python, javascript, typescript, go, java, ruby, php, c, cpp]
+    bad_patterns: ["sha1(", "createHash('sha1')", "MessageDigest.getInstance(\"SHA-1\")"]
+    good_patterns: ["argon2id", "bcrypt", "scrypt", "PBKDF2 with modern iterations"]
+    exclusions: ["git object id", "checksum", "legacy migration", "test fixture"]
+    references: ["https://www.nist.gov/news-events/news/2022/12/nist-retires-sha-1-cryptographic-algorithm"]
+  - id: crypto-ripemd160
+    category: Hash
+    title: RIPEMD160 used in security-sensitive code
+    severity: P2
+    description: RIPEMD160 should not be introduced for modern application security decisions.
+    languages: [python, javascript, typescript, go, java, ruby, php]
+    bad_patterns: ["ripemd160", "rmd160"]
+    good_patterns: ["SHA-256 for non-password integrity", "Argon2id/bcrypt/scrypt for passwords"]
+    exclusions: ["blockchain address compatibility", "test fixture"]
+    references: ["https://cwe.mitre.org/data/definitions/327.html"]
+  - id: crypto-unsalted-fast-hash
+    category: Hash
+    title: Fast hash used directly on passwords
+    severity: P1
+    description: Direct SHA/MD hashing of passwords is vulnerable to offline cracking.
+    languages: [python, javascript, typescript, go, java, ruby, php]
+    bad_patterns: ["password.*sha256", "passwd.*hashlib", "createHash('sha256').*password"]
+    good_patterns: ["Argon2id with unique salt", "bcrypt with cost", "scrypt", "PBKDF2-HMAC-SHA256 with high iterations"]
+    exclusions: ["HMAC", "checksum", "test fixture"]
+    references: ["https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html"]
+  - id: crypto-des
+    category: Symmetric
+    title: DES encryption
+    severity: P1
+    description: DES has a 56-bit key and is brute-forceable.
+    languages: [python, javascript, typescript, go, java, ruby, php, c, cpp]
+    bad_patterns: ["DES.new", "createCipheriv('des", "Cipher.getInstance(\"DES"]
+    good_patterns: ["AES-256-GCM", "ChaCha20-Poly1305"]
+    exclusions: ["decrypting legacy data during migration", "test fixture"]
+    references: ["https://cwe.mitre.org/data/definitions/327.html"]
+  - id: crypto-3des
+    category: Symmetric
+    title: 3DES encryption
+    severity: P2
+    description: 3DES is deprecated and has a small block size.
+    languages: [python, javascript, typescript, go, java, ruby, php]
+    bad_patterns: ["DES3", "des-ede3", "TripleDES", "DESede"]
+    good_patterns: ["AES-256-GCM", "ChaCha20-Poly1305"]
+    exclusions: ["legacy decrypt-only migration", "test fixture"]
+    references: ["https://csrc.nist.gov/publications/detail/sp/800-131a/rev-2/final"]
+  - id: crypto-rc4
+    category: Symmetric
+    title: RC4 stream cipher
+    severity: P1
+    description: RC4 is cryptographically broken and must not protect traffic or stored data.
+    languages: [python, javascript, typescript, go, java, ruby, php]
+    bad_patterns: ["ARC4", "RC4", "arcfour"]
+    good_patterns: ["AES-GCM", "ChaCha20-Poly1305"]
+    exclusions: ["test fixture", "compatibility parser without encryption"]
+    references: ["https://www.rfc-editor.org/rfc/rfc7465"]
+  - id: crypto-aes-ecb
+    category: Symmetric
+    title: AES ECB mode
+    severity: P1
+    description: ECB leaks plaintext structure and is not semantically secure.
+    languages: [python, javascript, typescript, go, java, ruby, php]
+    bad_patterns: ["AES.MODE_ECB", "aes-.*-ecb", "AES/ECB"]
+    good_patterns: ["AES-256-GCM", "AES-GCM-SIV", "ChaCha20-Poly1305"]
+    exclusions: ["test vector only"]
+    references: ["https://cwe.mitre.org/data/definitions/327.html"]
+  - id: crypto-cbc-without-auth
+    category: Symmetric
+    title: CBC or CTR encryption without visible authentication
+    severity: P2
+    description: CBC/CTR require separate authentication; unauthenticated ciphertexts can be malleable.
+    languages: [python, javascript, typescript, go, java, ruby, php]
+    bad_patterns: ["AES.MODE_CBC", "AES.MODE_CTR", "aes-.*-cbc", "aes-.*-ctr", "AES/CBC", "AES/CTR"]
+    good_patterns: ["AES-GCM", "ChaCha20-Poly1305", "encrypt-then-MAC with HMAC-SHA256"]
+    exclusions: ["nearby HMAC/signature verification", "legacy decrypt-only migration", "test fixture"]
+    references: ["https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html"]
+  - id: crypto-static-iv
+    category: Symmetric
+    title: Hardcoded IV or nonce
+    severity: P1
+    description: Reusing IVs/nonces can reveal plaintext or break authenticated encryption.
+    languages: [python, javascript, typescript, go, java, ruby, php]
+    bad_patterns: ["iv = b'", "iv = '0000000000000000'", "nonce = b'", "new IvParameterSpec"]
+    good_patterns: ["random 96-bit nonce for GCM", "crypto-secure random IV per encryption"]
+    exclusions: ["test vector", "documentation only"]
+    references: ["https://cwe.mitre.org/data/definitions/329.html"]
+  - id: crypto-rsa-pkcs1v15
+    category: Asymmetric
+    title: RSA PKCS#1 v1.5 encryption or signing
+    severity: P2
+    description: Prefer OAEP for encryption and PSS for signatures.
+    languages: [python, javascript, typescript, go, java, ruby]
+    bad_patterns: ["PKCS1_v1_5", "RSA_PKCS1_PADDING", "RSA/ECB/PKCS1Padding", "rsa.PKCS1v15"]
+    good_patterns: ["RSA-OAEP", "RSA-PSS"]
+    exclusions: ["legacy verify-only compatibility", "test fixture"]
+    references: ["https://cwe.mitre.org/data/definitions/780.html"]
+  - id: crypto-rsa-weak-key
+    category: Asymmetric
+    title: RSA key smaller than 2048 bits
+    severity: P1
+    description: RSA keys below 2048 bits do not meet modern security baselines.
+    languages: [python, javascript, typescript, go, java, ruby, openssl]
+    bad_patterns: ["rsa.generate_private_key.*key_size=1024", "GenerateKey.*1024", "rsa:1024"]
+    good_patterns: ["RSA 2048 or 3072", "Ed25519 where supported"]
+    exclusions: ["test fixture"]
+    references: ["https://csrc.nist.gov/publications/detail/sp/800-131a/rev-2/final"]
+  - id: crypto-ec-weak-curve
+    category: Asymmetric
+    title: Weak or obsolete elliptic curve
+    severity: P2
+    description: Obsolete curves should not be used for new signatures or key exchange.
+    languages: [python, javascript, typescript, go, java, ruby, openssl]
+    bad_patterns: ["secp192", "prime192", "sect163", "secp224"]
+    good_patterns: ["P-256", "P-384", "X25519", "Ed25519"]
+    exclusions: ["test vector", "legacy parser"]
+    references: ["https://cwe.mitre.org/data/definitions/327.html"]
+  - id: crypto-python-random-token
+    category: Random
+    title: Python random used for token or secret generation
+    severity: P1
+    description: The Python random module is predictable and not suitable for secrets.
+    languages: [python]
+    bad_patterns: ["random.random", "random.choice", "random.randint", "uuid.uuid4().hex[:"]
+    good_patterns: ["secrets.token_urlsafe", "secrets.token_hex", "os.urandom"]
+    exclusions: ["non-security simulation", "test fixture"]
+    references: ["https://docs.python.org/3/library/secrets.html"]
+  - id: crypto-js-math-random-token
+    category: Random
+    title: Math.random used for token or secret generation
+    severity: P1
+    description: Math.random is predictable and not suitable for tokens, nonces, or secrets.
+    languages: [javascript, typescript]
+    bad_patterns: ["Math.random"]
+    good_patterns: ["crypto.randomBytes", "crypto.getRandomValues", "webcrypto.getRandomValues"]
+    exclusions: ["UI randomness", "test fixture"]
+    references: ["https://developer.mozilla.org/en-US/docs/Web/API/Crypto/getRandomValues"]
+  - id: crypto-c-rand-token
+    category: Random
+    title: C rand/srand used for security-sensitive randomness
+    severity: P1
+    description: rand and srand are predictable and unsuitable for tokens, keys, or nonces.
+    languages: [c, cpp]
+    bad_patterns: ["rand()", "srand("]
+    good_patterns: ["getrandom", "arc4random_buf", "libsodium randombytes_buf"]
+    exclusions: ["non-security simulation", "test fixture"]
+    references: ["https://cwe.mitre.org/data/definitions/338.html"]
+  - id: crypto-java-random-token
+    category: Random
+    title: java.util.Random used for security-sensitive randomness
+    severity: P1
+    description: java.util.Random is predictable; use SecureRandom for tokens and keys.
+    languages: [java, kotlin]
+    bad_patterns: ["new Random()", "java.util.Random"]
+    good_patterns: ["java.security.SecureRandom"]
+    exclusions: ["non-security simulation", "test fixture"]
+    references: ["https://cwe.mitre.org/data/definitions/338.html"]
+  - id: crypto-pbkdf2-low-iterations
+    category: KDF
+    title: PBKDF2 iteration count too low
+    severity: P2
+    description: Low PBKDF2 iteration counts are vulnerable to offline cracking.
+    languages: [python, javascript, typescript, go, java, ruby, php]
+    bad_patterns: ["pbkdf2.*1000", "PBKDF2WithHmacSHA.*1000", "iterations: 1000"]
+    good_patterns: ["PBKDF2-HMAC-SHA256 with high iterations", "Argon2id", "scrypt", "bcrypt"]
+    exclusions: ["legacy verifier with migration", "test fixture"]
+    references: ["https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html"]
+  - id: crypto-bcrypt-low-cost
+    category: KDF
+    title: Bcrypt cost too low
+    severity: P2
+    description: Bcrypt work factors below 10 are too cheap for modern password storage.
+    languages: [python, javascript, typescript, ruby, php, java]
+    bad_patterns: ["bcrypt.*rounds=4", "bcrypt.*saltRounds.*[1-9]", "BCrypt.gensalt(4"]
+    good_patterns: ["bcrypt cost 12 or higher", "Argon2id"]
+    exclusions: ["test fixture"]
+    references: ["https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html"]
+  - id: crypto-hardcoded-salt
+    category: KDF
+    title: Hardcoded password salt
+    severity: P1
+    description: Static salts let attackers amortize cracking across users and deployments.
+    languages: [python, javascript, typescript, go, java, ruby, php]
+    bad_patterns: ["salt = \"", "salt: \"", "SALT = "]
+    good_patterns: ["unique random salt per password"]
+    exclusions: ["test fixture", "protocol constant not used for password hashing"]
+    references: ["https://cwe.mitre.org/data/definitions/759.html"]
+  - id: crypto-tls-verify-disabled
+    category: TLS
+    title: TLS certificate verification disabled
+    severity: P1
+    description: Disabling TLS verification enables man-in-the-middle attacks.
+    languages: [python, javascript, typescript, go, java, ruby, php]
+    bad_patterns: ["verify=False", "rejectUnauthorized: false", "InsecureSkipVerify: true", "CERT_NONE", "TrustAll"]
+    good_patterns: ["verify=True", "rejectUnauthorized: true", "trusted CA bundle"]
+    exclusions: ["local-only test harness", "explicit mock server"]
+    references: ["https://cwe.mitre.org/data/definitions/295.html"]
+  - id: crypto-tls-old-version
+    category: TLS
+    title: SSL or old TLS version enabled
+    severity: P1
+    description: SSLv2, SSLv3, TLS 1.0, and TLS 1.1 are deprecated.
+    languages: [python, javascript, typescript, go, java, ruby, nginx, yaml, json]
+    bad_patterns: ["SSLv2", "SSLv3", "TLSv1", "TLSv1.0", "TLSv1.1", "PROTOCOL_TLSv1"]
+    good_patterns: ["TLS 1.2 minimum", "TLS 1.3 preferred"]
+    exclusions: ["compatibility documentation", "test fixture"]
+    references: ["https://www.rfc-editor.org/rfc/rfc8996"]
+  - id: crypto-cert-self-signed-prod
+    category: TLS
+    title: Self-signed certificate used outside tests
+    severity: P2
+    description: Self-signed certificates can hide trust bypasses in production paths.
+    languages: [yaml, json, docker, shell, text]
+    bad_patterns: ["self_signed", "self-signed", "rejectUnauthorized: false"]
+    good_patterns: ["public CA or internal CA with explicit trust distribution"]
+    exclusions: ["local dev", "test fixture"]
+    references: ["https://cwe.mitre.org/data/definitions/295.html"]
+  - id: crypto-cert-weak-key
+    category: TLS
+    title: Weak certificate key size
+    severity: P2
+    description: RSA certificate keys below 2048 bits or weak EC curves should not be used.
+    languages: [yaml, json, shell, text]
+    bad_patterns: ["rsa:1024", "key_size: 1024", "secp192"]
+    good_patterns: ["RSA 2048 or 3072", "P-256/P-384", "Ed25519"]
+    exclusions: ["test fixture"]
+    references: ["https://csrc.nist.gov/publications/detail/sp/800-131a/rev-2/final"]
+  - id: crypto-jwt-alg-none
+    category: JWT
+    title: JWT alg none accepted or generated
+    severity: P1
+    description: Accepting unsigned JWTs can allow token forgery.
+    languages: [python, javascript, typescript, go, java, ruby, php]
+    bad_patterns: ["alg.*none", "algorithms.*none", "verify_signature.*False"]
+    good_patterns: ["explicit allowed algorithms", "signature verification required"]
+    exclusions: ["test fixture"]
+    references: ["https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html"]
+  - id: crypto-jwt-no-exp
+    category: JWT
+    title: JWT issued without expiration
+    severity: P2
+    description: Tokens without exp remain valid until key rotation or custom revocation.
+    languages: [python, javascript, typescript, go, java, ruby, php]
+    bad_patterns: ["jwt.encode", "sign("]
+    good_patterns: ["exp claim", "short TTL", "server-side revocation for high-risk tokens"]
+    exclusions: ["non-auth token", "test fixture"]
+    references: ["https://datatracker.ietf.org/doc/html/rfc7519"]
+  - id: crypto-jwt-hardcoded-secret
+    category: JWT
+    title: Hardcoded JWT signing secret
+    severity: P0
+    description: Hardcoded signing secrets can allow token forgery if source is exposed.
+    languages: [python, javascript, typescript, go, java, ruby, php]
+    bad_patterns: ["JWT_SECRET = \"", "jwt_secret: \"", "jwt.sign(.*, \"", "jwt.encode(.*, \""]
+    good_patterns: ["secret manager or environment variable", "asymmetric signing with protected private key"]
+    exclusions: ["test fixture", "example docs"]
+    references: ["https://cwe.mitre.org/data/definitions/798.html"]
+  - id: crypto-pickle-loads
+    category: Serialization
+    title: Python pickle loads on untrusted data
+    severity: P1
+    description: Pickle deserialization can execute code when input is attacker-controlled.
+    languages: [python]
+    bad_patterns: ["pickle.load", "pickle.loads"]
+    good_patterns: ["json", "pydantic/schema validation", "safe signed format"]
+    exclusions: ["trusted local cache with integrity", "test fixture"]
+    references: ["https://docs.python.org/3/library/pickle.html"]
+  - id: crypto-yaml-unsafe-load
+    category: Serialization
+    title: Unsafe YAML load
+    severity: P1
+    description: yaml.load without a safe loader can instantiate arbitrary objects.
+    languages: [python]
+    bad_patterns: ["yaml.load("]
+    good_patterns: ["yaml.safe_load", "yaml.load(..., Loader=yaml.SafeLoader)"]
+    exclusions: ["safe loader present", "test fixture"]
+    references: ["https://pyyaml.org/wiki/PyYAMLDocumentation"]
