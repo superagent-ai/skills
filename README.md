@@ -37,9 +37,9 @@ Validate exploitability of deduped findings with offensive-security
 
 Use it when defensive audits found issues and you need to know which are actually exploitable — bug bounty confirmation, autoresearch attack loops, or prioritizing remediation by exploitability, not CWE severity alone.
 
-It is an **instruction-only autoresearch skill**: it tells the agent how to use subagents to ingest defensive JSON, hypothesize, plan scoped sandbox validation, review evidence, evolve, chain new hypotheses from confirmations, and repeat until done. Pair with `hacker` Phase 6 (last). It ships no scripts or validators.
+It is an **instruction-only autoresearch skill**: it tells the agent how to use subagents to ingest defensive JSON, hypothesize, plan scoped sandbox validation, review evidence, evolve, chain new hypotheses from confirmations, reformulate inconclusive paths, and repeat until done. Pair with `hacker` Phase 6. It ships no scripts or validators.
 
-Requires explicit written scope for validation. Never attacks production by default. Pair with `hacker` Phase 6 after `deduped-findings.json` exists. The `hacker` helper scripts emit a `post_audit_plan` / `offensive_followup` handoff; the parent agent then loads `offensive-security` and coordinates subagents.
+Requires explicit written scope for live validation. Never attacks production by default. Without written scope, the loop still runs under a local-only planning boundary and marks live checks `unsafe_to_test`. Pair with `hacker` Phase 6 after `deduped-findings.json` exists; `hacker` then runs post-offensive `vulnerability-triage` for false-positive/by-design review.
 
 ```
 Validate these defensive findings: deduped-findings.json

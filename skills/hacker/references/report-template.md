@@ -99,11 +99,15 @@ P2/P3 hardening, tests, automation, and defense-in-depth work.
 
 ### Post-Audit Plan
 
-<offensive-security Phase 6 handoff when requested, including skill files to load and whether written scope is present>
+<offensive-security Phase 6 handoff when requested, including skill files to load, round limit, loop stop criteria, and validation boundary>
 
 ### Offensive Follow-Up
 
-<ready_for_phase6 | needs_scope_before_validation, deduped findings path, scope summary, and exact files to load>
+<ready_for_phase6, deduped findings path, scope summary or local-only boundary, loop controls, and exact files to load>
+
+### Post-Offensive Triage
+
+<vulnerability-triage Phase 7 handoff for false-positive/by-design review of offensive outcomes>
 
 ### Run Log
 

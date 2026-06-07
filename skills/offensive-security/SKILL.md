@@ -5,11 +5,11 @@ description: Instruction-only autoresearch skill for offensive validation of def
 
 # Offensive Security
 
-Offensive Security is an **instruction-only autoresearch loop**. It tells the agent how to coordinate subagents that read defensive findings, generate exploit hypotheses, validate only in authorized sandboxes, evolve based on evidence, and report confirmed vulnerabilities.
+Offensive Security is an **instruction-only autoresearch loop**. It tells the agent how to coordinate subagents that read defensive findings, generate exploit hypotheses, validate only in authorized sandboxes or local fixtures, evolve based on evidence, and report confirmed vulnerabilities.
 
 It does not provide scanners, exploit code, validators, or local runner scripts. The agent supplies judgment and uses subagents for parallel research and validation. See `references/autoresearch-loop.md` for detailed loop control.
 
-Within `hacker`, this skill runs **last** (Phase 6): complete all defensive specialists, deduplicate, triage, and emit `hacker-report.md` before starting the autoresearch loop.
+Within `hacker`, this skill runs as **Phase 6**: complete all defensive specialists, deduplicate, triage, and emit `hacker-report.md` before starting the autoresearch loop. `hacker` then runs post-offensive `vulnerability-triage` as Phase 7.
 
 **Not** a blind scanner. **Not** a replacement for authorized live pentests (`recon-security`). **Not** runnable against production without explicit written scope.
 
@@ -61,6 +61,8 @@ Ask each subagent to return:
 
 Validation is agent-directed. Prefer asking subagents to design validation steps and review evidence rather than executing exploit code automatically.
 
+If written scope is missing, continue the loop under a local-only planning boundary inferred from the findings. Still generate hypotheses, validation plans, evidence requirements, likely false-positive reasons, and chain candidates. Classify any live, external, production, or credential-dependent validation as `unsafe_to_test`.
+
 Only execute validation when all are true:
 
 - the user explicitly requested validation
@@ -86,7 +88,7 @@ After each validation round:
 - `false_positive` → log for defensive skill tuning; do not retry
 - `mitigated` → document compensating control
 
-Repeat until no new high-confidence hypotheses remain, a configured round limit is reached, or the user stops the loop.
+Repeat until no new high-confidence hypotheses remain, all remaining hypotheses are `false_positive`, `mitigated`, or `unsafe_to_test`, a configured round limit is reached, or the user stops the loop. Default round limit when invoked by `hacker`: 3.
 
 ### Phase 5 — Report
 
@@ -101,6 +103,8 @@ Write a report with:
 - false positives for defensive tuning
 - chaining map
 - remediation priority
+
+When invoked by `hacker`, return the report to Phase 7 (`vulnerability-triage`) for a final false-positive/by-design review before the final hacker summary.
 
 ## Safety and guardrails
 

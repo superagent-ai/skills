@@ -277,11 +277,13 @@ def build_dispatch_plan(
     post_audit_plan: list[dict] = []
     offensive_condition = matrix.get("optional_skill_conditions", {}).get(
         "offensive-security",
-        "requires explicit user request and written scope",
+        "requires explicit user request; written scope enables validation, otherwise use a local-only planning boundary",
     )
     if offensive and "offensive-security" not in excluded:
         post_audit_skills.append("offensive-security")
         post_audit_plan.append(build_offensive_post_audit_plan())
+        post_audit_skills.append("vulnerability-triage")
+        post_audit_plan.append(build_post_offensive_triage_plan())
     else:
         skipped_optional["offensive-security"] = (
             f"{offensive_condition} Runs last (Phase 6), after all defensive skills and deduplicated findings."
@@ -342,11 +344,53 @@ def build_offensive_post_audit_plan() -> dict:
         "input_artifact": "deduped-findings.json",
         "requires": [
             "explicit user request for offensive validation or autoresearch",
-            "written scope or confirmed sandbox targets before validation",
+            "written scope, confirmed sandbox targets, or local-only planning boundary inferred from findings",
+        ],
+        "loop": {
+            "default_round_limit": 3,
+            "continue_until": [
+                "no new high-confidence hypotheses remain",
+                "all remaining hypotheses are false_positive, mitigated, or unsafe_to_test",
+                "the configured round limit is reached",
+                "the user interrupts",
+            ],
+            "round_steps": [
+                "launch hypothesis researchers by finding family",
+                "deduplicate and rank hypotheses",
+                "launch validation planners for top hypotheses",
+                "classify evidence or missing prerequisites",
+                "spawn chain researchers from confirmed outcomes",
+                "spawn reformulation researchers from inconclusive outcomes when a safe next path exists",
+            ],
+        },
+        "agent_action": (
+            "Load the offensive-security skill and run multi-round subagent autoresearch until the loop stop criteria are met. "
+            "If written scope is missing, continue under a local-only planning boundary inferred from findings; classify live or external validation as unsafe_to_test instead of asking before the loop starts."
+        ),
+    }
+
+
+def build_post_offensive_triage_plan() -> dict:
+    return {
+        "phase": "Phase 7 - Post-Offensive False-Positive Triage",
+        "skill": "vulnerability-triage",
+        "position": "after-offensive-security",
+        "runs_after": [
+            "offensive-security autoresearch report exists",
+            "offensive outcomes are classified",
+        ],
+        "load": [
+            "skills/vulnerability-triage/SKILL.md",
+            "skills/vulnerability-triage/references/severity-rubric.md",
+            "skills/vulnerability-triage/references/triage-report-template.md",
+        ],
+        "input_artifact": "offensive-security autoresearch report",
+        "requires": [
+            "offensive outcomes including confirmed, inconclusive, mitigated, false_positive, and unsafe_to_test",
         ],
         "agent_action": (
-            "Load the offensive-security skill and run its subagent autoresearch loop. "
-            "If scope is missing, stay in planning mode and classify validation items as unsafe_to_test."
+            "Run vulnerability-triage as a post-offensive false-positive/by-design review. "
+            "Re-check confirmed and inconclusive outcomes against project intent, privilege context, compensating controls, and evidence quality; emit tuning notes for false positives before the final hacker summary."
         ),
     }
 

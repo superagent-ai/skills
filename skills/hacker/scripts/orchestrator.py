@@ -130,10 +130,24 @@ def build_offensive_followup(
         return None
     post_audit_plan = plan.get("post_audit_plan") or []
     phase_plan = next((item for item in post_audit_plan if item.get("skill") == "offensive-security"), {})
+    triage_plan = next(
+        (
+            item
+            for item in post_audit_plan
+            if item.get("skill") == "vulnerability-triage"
+            and str(item.get("phase", "")).startswith("Phase 7")
+        ),
+        {},
+    )
     return {
-        "status": "ready_for_phase6" if scope else "needs_scope_before_validation",
+        "status": "ready_for_phase6",
         "skill": "offensive-security",
         "scope": scope,
+        "validation_boundary": (
+            scope
+            if scope
+            else "local-only planning and sandbox fixtures inferred from findings; live or external validation is unsafe_to_test"
+        ),
         "deduped_findings": (
             str(Path(deduped_output).expanduser().resolve())
             if deduped_output
@@ -151,10 +165,29 @@ def build_offensive_followup(
             "agent_action",
             "Load offensive-security and run the subagent autoresearch loop last.",
         ),
+        "loop": phase_plan.get("loop", {}),
+        "post_offensive_triage": {
+            "skill": triage_plan.get("skill", "vulnerability-triage"),
+            "phase": triage_plan.get("phase", "Phase 7 - Post-Offensive False-Positive Triage"),
+            "load": triage_plan.get(
+                "load",
+                [
+                    "skills/vulnerability-triage/SKILL.md",
+                    "skills/vulnerability-triage/references/severity-rubric.md",
+                    "skills/vulnerability-triage/references/triage-report-template.md",
+                ],
+            ),
+            "agent_action": triage_plan.get(
+                "agent_action",
+                "Run vulnerability-triage after offensive-security to review false positives and by-design outcomes.",
+            ),
+        },
         "notes": [
             "The Python helper does not execute instruction-only skills.",
             "A parent agent must load the listed skill files and coordinate Phase 6 subagents.",
-            "Without written scope, validation must remain in planning mode and mark items unsafe_to_test.",
+            "Do not stop before Phase 6 just because written scope is missing; run the hypothesis loop under a local-only planning boundary.",
+            "Without written scope, live or external validation remains unsafe_to_test.",
+            "After Phase 6, run vulnerability-triage over offensive outcomes before the final hacker summary.",
         ],
     }
 

@@ -253,10 +253,32 @@ def render_appendix(plan: dict[str, Any], result: dict[str, Any]) -> list[str]:
                 "",
                 f"- Status: {offensive_followup.get('status', 'unknown')}",
                 f"- Scope: {offensive_followup.get('scope') or 'missing'}",
+                f"- Validation boundary: {offensive_followup.get('validation_boundary', 'unknown')}",
                 f"- Deduped findings: `{offensive_followup.get('deduped_findings')}`",
                 f"- Load: {comma(offensive_followup.get('load') or [])}",
             ]
         )
+        loop = offensive_followup.get("loop") or {}
+        if loop:
+            lines.extend(
+                [
+                    f"- Round limit: {loop.get('default_round_limit', 'unknown')}",
+                    f"- Continue until: {comma(loop.get('continue_until') or [])}",
+                ]
+            )
+        post_offensive_triage = offensive_followup.get("post_offensive_triage") or {}
+        if post_offensive_triage:
+            lines.extend(
+                [
+                    "",
+                    "### Post-Offensive Triage",
+                    "",
+                    f"- Skill: {post_offensive_triage.get('skill', 'vulnerability-triage')}",
+                    f"- Phase: {post_offensive_triage.get('phase', 'Phase 7 - Post-Offensive False-Positive Triage')}",
+                    f"- Load: {comma(post_offensive_triage.get('load') or [])}",
+                    f"- Action: {post_offensive_triage.get('agent_action', 'Review offensive outcomes for false positives and by-design behavior.')}",
+                ]
+            )
     lines.extend(["", "### Limitations", ""])
     lines.extend(
         [
