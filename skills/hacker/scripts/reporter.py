@@ -58,6 +58,7 @@ def render_report(result: dict[str, Any], plan: dict[str, Any], target_override:
     repo_type = plan.get("repo_type") or "unknown"
     risk = summary.get("risk_rating") or risk_rating(counts)
     skills_to_run = plan.get("skills_to_run") or []
+    post_audit_skills = result.get("post_audit_skills") or plan.get("post_audit_skills") or []
     run_log = result.get("run_log") or []
     completed = [entry.get("source_skill", "unknown") for entry in run_log if entry.get("status") == "completed"]
     failed_or_skipped = [entry for entry in run_log if entry.get("status") not in (None, "completed")]
@@ -79,6 +80,7 @@ def render_report(result: dict[str, Any], plan: dict[str, Any], target_override:
         f"- Target: `{target}`",
         "- Mode: read-only static review unless live recon scope is explicitly listed",
         f"- Skills selected: {comma(skills_to_run)}",
+        f"- Post-audit skills: {comma(post_audit_skills)}",
         f"- Skills completed: {comma(completed)}",
         f"- Skills failed or skipped: {comma([entry.get('source_skill', 'unknown') for entry in failed_or_skipped])}",
         "- Static limits: no target-code execution, no credential validation, and no cloud/API verification unless separately authorized",
@@ -212,6 +214,8 @@ def render_compliance(findings: list[dict[str, Any]]) -> list[str]:
 
 
 def render_appendix(plan: dict[str, Any], result: dict[str, Any]) -> list[str]:
+    post_audit_plan = result.get("post_audit_plan") or plan.get("post_audit_plan") or []
+    offensive_followup = result.get("offensive_followup") or {}
     lines = [
         "### Dispatch Plan",
         "",
@@ -219,6 +223,7 @@ def render_appendix(plan: dict[str, Any], result: dict[str, Any]) -> list[str]:
         f"- Confidence: {plan.get('confidence', 'unknown')}",
         f"- Matched signals: {comma(plan.get('matched_signals') or [])}",
         f"- Skills to run: {comma(plan.get('skills_to_run') or [])}",
+        f"- Post-audit skills: {comma(result.get('post_audit_skills') or plan.get('post_audit_skills') or [])}",
         "",
         "### File Inventory",
         "",
@@ -234,12 +239,31 @@ def render_appendix(plan: dict[str, Any], result: dict[str, Any]) -> list[str]:
         )
     else:
         lines.append("No discovery inventory was provided.")
+    lines.extend(["", "### Post-Audit Plan", ""])
+    if post_audit_plan:
+        for item in post_audit_plan:
+            lines.append(f"- `{item.get('skill')}` ({item.get('phase', 'post-audit')}): {item.get('agent_action')}")
+    else:
+        lines.append("No post-audit skills were requested.")
+    if offensive_followup:
+        lines.extend(
+            [
+                "",
+                "### Offensive Follow-Up",
+                "",
+                f"- Status: {offensive_followup.get('status', 'unknown')}",
+                f"- Scope: {offensive_followup.get('scope') or 'missing'}",
+                f"- Deduped findings: `{offensive_followup.get('deduped_findings')}`",
+                f"- Load: {comma(offensive_followup.get('load') or [])}",
+            ]
+        )
     lines.extend(["", "### Limitations", ""])
     lines.extend(
         [
             "- Static review cannot prove deployed configuration, runtime secrets, secret validity, cloud drift, or registry reputation.",
             "- Clean output means no findings against the selected control set, not proof that the system is secure.",
             "- Any unrun, failed, or skipped specialist leaves an explicit coverage gap.",
+            "- Instruction-only post-audit skills require a parent agent to load the listed skill files; helper scripts only emit the handoff.",
         ]
     )
     return lines

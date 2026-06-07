@@ -39,7 +39,7 @@ Use it when defensive audits found issues and you need to know which are actuall
 
 It is an **instruction-only autoresearch skill**: it tells the agent how to use subagents to ingest defensive JSON, hypothesize, plan scoped sandbox validation, review evidence, evolve, chain new hypotheses from confirmations, and repeat until done. Pair with `hacker` Phase 6 (last). It ships no scripts or validators.
 
-Requires explicit written scope for validation. Never attacks production by default. Pair with `hacker` Phase 6 after `deduped-findings.json` exists.
+Requires explicit written scope for validation. Never attacks production by default. Pair with `hacker` Phase 6 after `deduped-findings.json` exists. The `hacker` helper scripts emit a `post_audit_plan` / `offensive_followup` handoff; the parent agent then loads `offensive-security` and coordinates subagents.
 
 ```
 Validate these defensive findings: deduped-findings.json

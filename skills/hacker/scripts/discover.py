@@ -274,12 +274,14 @@ def build_dispatch_plan(
     selected = [skill for skill in unique(selected) if skill not in excluded]
 
     post_audit_skills: list[str] = []
+    post_audit_plan: list[dict] = []
     offensive_condition = matrix.get("optional_skill_conditions", {}).get(
         "offensive-security",
         "requires explicit user request and written scope",
     )
     if offensive and "offensive-security" not in excluded:
         post_audit_skills.append("offensive-security")
+        post_audit_plan.append(build_offensive_post_audit_plan())
     else:
         skipped_optional["offensive-security"] = (
             f"{offensive_condition} Runs last (Phase 6), after all defensive skills and deduplicated findings."
@@ -305,6 +307,7 @@ def build_dispatch_plan(
         "detected_frameworks": inventory["frameworks"],
         "skills_to_run": selected,
         "post_audit_skills": post_audit_skills,
+        "post_audit_plan": post_audit_plan,
         "workflow_order": selected + post_audit_skills,
         "skipped_optional_skills": skipped_optional,
         "repo_type_scores": repo_scores,
@@ -319,6 +322,32 @@ def build_dispatch_plan(
             "advisory": advisory,
             "offensive": offensive,
         },
+    }
+
+
+def build_offensive_post_audit_plan() -> dict:
+    return {
+        "phase": "Phase 6 - Offensive Autoresearch",
+        "skill": "offensive-security",
+        "position": "last",
+        "runs_after": [
+            "defensive specialist results are collected",
+            "deduped-findings.json exists",
+            "hacker-report.md is emitted",
+        ],
+        "load": [
+            "skills/offensive-security/SKILL.md",
+            "skills/offensive-security/references/autoresearch-loop.md",
+        ],
+        "input_artifact": "deduped-findings.json",
+        "requires": [
+            "explicit user request for offensive validation or autoresearch",
+            "written scope or confirmed sandbox targets before validation",
+        ],
+        "agent_action": (
+            "Load the offensive-security skill and run its subagent autoresearch loop. "
+            "If scope is missing, stay in planning mode and classify validation items as unsafe_to_test."
+        ),
     }
 
 
@@ -388,6 +417,11 @@ def render_markdown(plan: dict) -> str:
         lines.append("## Skipped Optional Skills")
         for skill, reason in plan["skipped_optional_skills"].items():
             lines.append(f"- `{skill}`: {reason}")
+    if plan.get("post_audit_plan"):
+        lines.append("")
+        lines.append("## Post-Audit Plan")
+        for item in plan["post_audit_plan"]:
+            lines.append(f"- `{item.get('skill')}`: {item.get('agent_action')}")
     return "\n".join(lines)
 
 

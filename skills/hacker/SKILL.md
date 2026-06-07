@@ -25,6 +25,8 @@ python3 skills/hacker/scripts/discover.py <target-dir> --offensive
 
 Record repo type, detected surfaces, `skills_to_run` (defensive only), `post_audit_skills` (offensive when `--offensive`), and `skipped_optional_skills`. Do not run `offensive-security` during Phase 2.
 
+When `--offensive` is set, discovery also emits `post_audit_plan`: a machine-readable Phase 6 handoff that tells the parent agent to load `skills/offensive-security/SKILL.md` and `skills/offensive-security/references/autoresearch-loop.md` after the defensive report.
+
 ### Phase 2 - Dispatch specialists (defensive only)
 
 Run every skill in `skills_to_run`. **Do not** run `offensive-security` here — it belongs in Phase 6.
@@ -83,6 +85,8 @@ Run **after** Phases 3–5 complete. Requires explicit user request (e.g. valida
 Append confirmed vulnerabilities to the hacker report appendix or deliver as a separate artifact. If scope is missing or validation would require unsafe actions, record `unsafe_to_test` items in the appendix — do not probe production.
 
 **Boundary:** `recon-security` = authorized live pentest. `offensive-security` = sandbox validation of static defensive findings.
+
+Helper scripts cannot execute instruction-only skills. `scripts/orchestrator.py --offensive` carries the Phase 6 handoff forward as `post_audit_plan` and `offensive_followup`; the parent agent must load `offensive-security` and run the subagent loop after the generated `hacker-report.md`.
 
 ## Finding format
 

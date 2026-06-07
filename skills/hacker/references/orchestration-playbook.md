@@ -25,6 +25,7 @@ Success criteria:
 - `recon-security` is selected only when live scope and authorization are explicit.
 - `vulnerability-triage` is selected only when a report/advisory is supplied.
 - `offensive-security` appears in `post_audit_skills` only with `--offensive` or explicit user request; never in `skills_to_run` and never during Phase 2.
+- When `offensive-security` is selected, discovery emits `post_audit_plan` with the exact skill files and Phase 6 agent action.
 
 ## Phase 2 - Dispatch (defensive specialists only)
 
@@ -122,6 +123,8 @@ Run **after** Phases 3, 4, and 5 — when `post_audit_skills` includes `offensiv
 
 `offensive-security` is an instruction-only skill. It ships no scanners, validator scripts, or exploit runners. The parent agent loads `skills/offensive-security/SKILL.md` and coordinates subagents through the autoresearch loop.
 
+The helper scripts do not run instruction-only skills. `discover.py --offensive` emits a `post_audit_plan`, and `orchestrator.py --offensive` carries that into `offensive_followup` so the parent agent has an explicit Phase 6 handoff after the defensive report.
+
 Steps:
 
 1. Load `skills/offensive-security/SKILL.md` and `references/autoresearch-loop.md`.
@@ -163,6 +166,8 @@ python3 skills/hacker/scripts/discover.py . --offensive
 ```
 
 Then load `skills/offensive-security/SKILL.md` and run the subagent autoresearch loop using the deduped findings.
+
+If you use `orchestrator.py --offensive --scope <scope> --deduped-output deduped-findings.json --output hacker-report.md`, inspect the JSON `offensive_followup.status`. `ready_for_phase6` means load `offensive-security`; `needs_scope_before_validation` means stay in planning mode and mark validation items `unsafe_to_test` until written scope exists.
 
 Strict mode should fail when P0 or P1 findings remain. It should not claim model-only skills were run unless their result files are present.
 

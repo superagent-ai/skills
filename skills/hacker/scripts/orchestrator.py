@@ -79,6 +79,7 @@ def main(argv: list[str] | None = None) -> int:
         "offensive_requested": args.offensive,
         "offensive_scope": args.scope,
         "post_audit_skills": plan.get("post_audit_skills", []),
+        "post_audit_plan": plan.get("post_audit_plan", []),
         "workflow_order": plan.get("workflow_order", plan.get("skills_to_run", [])),
         "summary": deduplicator.summarize(adjusted),
         "findings": adjusted,
@@ -87,6 +88,9 @@ def main(argv: list[str] | None = None) -> int:
         "run_log": run_log,
         "input_count": len(raw_docs),
     }
+    offensive_followup = build_offensive_followup(plan, args.scope, args.deduped_output, args.output)
+    if offensive_followup:
+        result["offensive_followup"] = offensive_followup
 
     deduped_json = json.dumps(result, indent=2, sort_keys=True)
     if args.deduped_output:
@@ -102,6 +106,7 @@ def main(argv: list[str] | None = None) -> int:
                     "total_findings": result["summary"]["total"],
                     "report": str(Path(args.output).resolve()),
                     "deduped": str(Path(args.deduped_output).resolve()) if args.deduped_output else None,
+                    "offensive_followup": offensive_followup.get("status") if offensive_followup else None,
                 },
                 indent=2,
                 sort_keys=True,
@@ -113,6 +118,45 @@ def main(argv: list[str] | None = None) -> int:
     if args.strict and any(item.get("severity") in {"P0", "P1"} for item in adjusted):
         return 1
     return 0
+
+
+def build_offensive_followup(
+    plan: dict,
+    scope: str | None,
+    deduped_output: str | None,
+    report_output: str | None,
+) -> dict | None:
+    if "offensive-security" not in plan.get("post_audit_skills", []):
+        return None
+    post_audit_plan = plan.get("post_audit_plan") or []
+    phase_plan = next((item for item in post_audit_plan if item.get("skill") == "offensive-security"), {})
+    return {
+        "status": "ready_for_phase6" if scope else "needs_scope_before_validation",
+        "skill": "offensive-security",
+        "scope": scope,
+        "deduped_findings": (
+            str(Path(deduped_output).expanduser().resolve())
+            if deduped_output
+            else "not written; rerun with --deduped-output or pass this JSON result to offensive-security"
+        ),
+        "hacker_report": str(Path(report_output).expanduser().resolve()) if report_output else None,
+        "load": phase_plan.get(
+            "load",
+            [
+                "skills/offensive-security/SKILL.md",
+                "skills/offensive-security/references/autoresearch-loop.md",
+            ],
+        ),
+        "agent_action": phase_plan.get(
+            "agent_action",
+            "Load offensive-security and run the subagent autoresearch loop last.",
+        ),
+        "notes": [
+            "The Python helper does not execute instruction-only skills.",
+            "A parent agent must load the listed skill files and coordinate Phase 6 subagents.",
+            "Without written scope, validation must remain in planning mode and mark items unsafe_to_test.",
+        ],
+    }
 
 
 if __name__ == "__main__":

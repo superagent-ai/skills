@@ -14,6 +14,7 @@
 - Target: <target_dir>
 - Mode: read-only static review unless live recon scope is explicitly listed
 - Skills selected: <skills_to_run>
+- Post-audit skills: <post_audit_skills>
 - Skills completed: <skills_completed>
 - Skills failed or skipped: <skills_failed_or_skipped>
 - Static limits: no target-code execution, no credential validation, no cloud/API verification unless separately authorized
@@ -90,11 +91,19 @@ P2/P3 hardening, tests, automation, and defense-in-depth work.
 
 ### Dispatch Plan
 
-<repo type, detected surfaces, selected skills, skipped optional skills>
+<repo type, detected surfaces, selected skills, post-audit skills, skipped optional skills>
 
 ### File Inventory
 
 <inventory counts and skipped directories>
+
+### Post-Audit Plan
+
+<offensive-security Phase 6 handoff when requested, including skill files to load and whether written scope is present>
+
+### Offensive Follow-Up
+
+<ready_for_phase6 | needs_scope_before_validation, deduped findings path, scope summary, and exact files to load>
 
 ### Run Log
 
@@ -105,3 +114,4 @@ P2/P3 hardening, tests, automation, and defense-in-depth work.
 - Static review cannot prove deployed configuration, runtime secrets, secret validity, cloud drift, or registry reputation.
 - Clean output means no findings against the selected control set, not proof that the system is secure.
 - Any unrun, failed, or skipped specialist leaves explicit coverage gaps.
+- Instruction-only post-audit skills require a parent agent to load the listed skill files; helper scripts only emit the handoff.
