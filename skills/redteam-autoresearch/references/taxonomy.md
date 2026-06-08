@@ -9,6 +9,14 @@ The loop tests four category families (set the sampling mix in `config.yaml`):
 - `prompt_injection` - attacker-controlled instruction following / leakage.
 - `backdoor` - black-box trigger probing (see [attack-library.md](attack-library.md)).
 
+## Attack styles (diversity axis)
+
+The MAP-Elites archive ([search-loop.md](search-loop.md)) is a grid of `category x attack_style`.
+`attack_style` is the second dimension (defined as `ATTACK_STYLES` in `scripts/schema.py`):
+`direct`, `roleplay_persona`, `hypothetical_fiction`, `encoding_obfuscation`, `authority_appeal`,
+`persuasion_social`, `multi_turn_escalation`, `context_overload`, `format_injection`,
+`code_cipher`. Mutators tag each probe with the right style so it lands in the correct cell.
+
 ## Hazard codes (Llama Guard 3 / MLCommons)
 
 You label `violated_categories` using these codes; the exporter writes them into the Llama
@@ -46,10 +54,13 @@ Outcomes (snake_case, from the `hacker` loop) and how `record.py` maps them to a
 
 The agent is the attacker and judge; the harness only calls the target.
 
-- `data/attacks.jsonl` (you write): `{category, technique, hypothesis, prompt}` or `{... , messages}`
+- `data/target_profile.json` (`profile_target.py`): target fingerprint + recommended attack styles.
+- `data/seeds.jsonl` (you write): a few seed attacks per under-explored archive cell.
+- `data/attacks.jsonl` (`mutators.py` expands seeds): `{category, technique, attack_style, hypothesis, prompt}` or `{... , messages}`
 - `data/transcripts.jsonl` (`query_target.py`): attacks plus `{messages, response, provider, target_model}`
-- `data/judged.jsonl` (you write): transcripts plus `{outcome, violated_categories, severity, judge_rationale}`
-- `data/attempts.jsonl` (`record.py`): normalized `Attempt` rows (label + novelty computed)
+- `data/judged.jsonl` (you write): transcripts plus `{refused, specificity, convincingness, strongreject_score, outcome, violated_categories, severity, judge_rationale}`
+- `data/attempts.jsonl` (`record.py`): normalized `Attempt` rows (label + novelty + StrongREJECT score)
+- `data/archive.json` (`archive.py`): MAP-Elites elites per `category x attack_style` cell
 
 ## Attempt schema (attempts.jsonl)
 
@@ -57,11 +68,16 @@ Each judged turn is one row (`scripts/schema.py`, `Attempt`):
 
 - `id`, `run_id`, `schema_version`, `timestamp`
 - `round`, `cycle`, `turn`, `seed_parent_id`
-- `category`, `technique`, `hypothesis`
+- `category`, `technique`, `attack_style`, `hypothesis`
 - `provider`, `target_model`, `attacker` (= `agent`), `judged_by` (= `agent`)
 - `messages` (full conversation), `prompt`, `response`
 - `outcome`, `label`, `violated_categories`, `attack_success`, `severity`, `judge_rationale`
-- `novelty_score`
+- `novelty_score`, `strongreject_score`
+
+The new `attack_style` and `strongreject_score` fields are additive. The export formats below are
+unchanged: `export_guardrail.py` reads only `label`, `violated_categories`, `messages`, `prompt`,
+`response`, `category`, and `technique`, so `llama_guard.jsonl` and `chat_classification.jsonl`
+stay byte-for-byte compatible.
 
 ## Export formats (`scripts/export_guardrail.py`)
 

@@ -3,3 +3,7 @@ python-dotenv>=1.0.0
 PyYAML>=6.0
 tenacity>=8.2.0
 tqdm>=4.66.0
+
+# Optional: semantic novelty (scripts/novelty.py). Without it, novelty falls back to
+# token-set Jaccard automatically. Install with: pip install sentence-transformers
+# sentence-transformers>=2.2.0

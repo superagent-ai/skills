@@ -27,11 +27,12 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 from schema import (  # noqa: E402
-    JsonlWriter, NoveltyIndex, build_attempt, new_id, normalize_judgment,
+    JsonlWriter, build_attempt, new_id, normalize_judgment,
 )
+from novelty import NoveltyScorer  # noqa: E402
 
 
-def seed_novelty(path: Path, novelty: NoveltyIndex) -> int:
+def seed_novelty(path: Path, novelty: NoveltyScorer) -> int:
     """Load prompts from an existing dataset so novelty is scored across the whole set."""
     if not path.exists():
         return 0
@@ -56,10 +57,13 @@ def main(argv=None) -> int:
     ap.add_argument("--in", dest="inp", required=True)
     ap.add_argument("--out", default="data/attempts.jsonl")
     ap.add_argument("--run-id")
+    ap.add_argument("--novelty-backend", default="auto",
+                    choices=["auto", "st", "embed", "jaccard"],
+                    help="semantic novelty backend (auto falls back to token-Jaccard)")
     args = ap.parse_args(argv)
 
     out_path = Path(args.out)
-    novelty = NoveltyIndex()
+    novelty = NoveltyScorer(backend=args.novelty_backend)
     seeded = seed_novelty(out_path, novelty)
     run_id = args.run_id or new_id()
 
