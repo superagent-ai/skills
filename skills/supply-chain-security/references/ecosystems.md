@@ -24,7 +24,7 @@ Commands marked "registry" reach the public registry/OSV with package data only 
 
 **Provenance:** npm provenance (SLSA via OIDC). Verify: `npm audit signatures`. Caveat: provenance proves *which build* produced the artifact, not that the publisher was *authorized* — an OIDC token stolen from CI yields valid attestations (the "Mini Shai-Hulud" `@tanstack` case).
 
-**Registry checks:** `npm view <pkg> time` (recency), `npm view <pkg> maintainers dist.integrity`, `osv-scanner --lockfile=package-lock.json`.
+**Registry checks:** `npm view <pkg> time` (recency), `npm view <pkg> maintainers dist.integrity`, `osv-scanner --lockfile=package-lock.json`, `cve-lite-cli` (OWASP; scans the npm/pnpm/yarn/bun lockfile against OSV with direct-vs-transitive visibility and `--fix` remediation, plus an `--offline` advisory DB for restricted networks). These are advisory/OSV matches — pair them with the behavioral review for malware that isn't in an advisory feed yet.
 
 **Bug to flag:** a `preinstall`/`postinstall` doing network/secret/obfuscated work; a **`binding.gyp`** with shell expansion in `sources` or a `type: "none"` fake native target; `setup_bun.js` + `bun_environment.js`, `telemetry.js`, or a malicious `binding.gyp` + root `index.js`; a range or missing lockfile; an unscoped internal name; a lockfile entry with no `integrity`.
 

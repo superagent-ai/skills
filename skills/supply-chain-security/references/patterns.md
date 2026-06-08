@@ -10,7 +10,7 @@ A new dependency is the highest-risk moment. Walk it:
 2. **Read the install scripts — and `binding.gyp`.** `npm view <pkg> scripts` (or open `package.json` in the tarball). A `preinstall`/`postinstall` is a yellow flag; one doing network/secret/obfuscated work is a stop. Also check for **`binding.gyp`**: a package with no legitimate native code should not have one, and any `sources` entry with shell expansion is a stop.
 3. **Wait out a cooldown.** Don't install a version published hours ago. Most malware is caught within 24–48h, so a delay filters the smash-and-grab campaigns for free (next entry).
 4. **Pin and lock.** Add it at an exact version, commit the lockfile, install with the frozen command.
-5. **Scan.** `osv-scanner` / `npm audit signatures` against the lockfile, and a behavioral check (Socket/Snyk) if available.
+5. **Scan.** `osv-scanner` / `npm audit signatures` against the lockfile (for JS/TS, OWASP `cve-lite-cli` adds OSV matching with copy-and-run `--fix` remediation and an `--offline` advisory DB), and a behavioral check (Socket/Snyk) if available.
 
 The point is sequencing: confirm *who* and *what* before the install runs code, not after.
 
@@ -107,7 +107,7 @@ If you publish, you are a target — Shai-Hulud spreads by republishing maintain
 
 - **Update bot with a cooldown** (Dependabot/Renovate) so bumps are reviewable PRs that have aged past the malware window.
 - **PR dependency review**: `actions/dependency-review-action` flags newly added deps and known-vulnerable versions on every PR.
-- **Continuous SCA** against OSV/advisories (`osv-scanner` in CI, Socket, Snyk) so a dependency found malicious *after* you adopted it raises an alert.
+- **Continuous SCA** against OSV/advisories (`osv-scanner` in CI, Socket, Snyk; for JS/TS, OWASP `cve-lite-cli` with `--fail-on high`, `--sarif` for GitHub Code Scanning, or its first-party GitHub Action pinned to a commit SHA) so a dependency found malicious *after* you adopted it raises an alert.
 - **An SBOM** (CycloneDX/Syft) per release, so when the next advisory drops you can answer "were we shipping the bad version?" in seconds instead of days.
 
 None of these is sufficient alone. Together — exact pins, committed lockfile, `ignore-scripts`, cooldown, scoped internal names, provenance, and continuous scanning — they raise the cost of a supply-chain attack from "publish a package" to "defeat every layer," which is the whole game.
