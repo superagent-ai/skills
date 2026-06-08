@@ -7,41 +7,17 @@ Each skill ships in the open [Agent Skills](https://agentskills.io/) format and 
 ## Skills
 
 <details>
-<summary><b>hacker</b>: unified security audit orchestrator</summary>
+<summary><b>hacker</b>: Cursor-native offensive engagement and exploitability validation</summary>
 
-Use it when you need a full repository security baseline, pre-production review, compliance-oriented report, or one answer to "what is the security posture of this codebase?"
+Use it when you need an authorized offensive workflow inspired by `offensive-claude`: scoped web, network, cloud, mobile, Active Directory, bug bounty, or red-team engagement planning with phase gates, role handoffs, templates, and reports. Use `validate-findings` mode when defensive audits found issues and you need to know which are actually exploitable.
 
-It is a meta-skill (formerly `security-suite`): it discovers the target's attack surface, selects the relevant specialist skills, coordinates parallel reviews where possible, deduplicates findings, normalizes severity, and emits one executive report. Optionally chains `offensive-security` when you want sandbox exploit validation of defensive findings. It coordinates:
+It is **instruction-only**: it ships no scanners, validators, payload builders, exploit runners, or local scripts. In `engagement` mode, it routes through Kill Chain style phases with scope gates and Cursor subagent roles. In `validate-findings` mode, it ingests defensive JSON, hypothesizes, plans scoped sandbox validation, reviews evidence, evolves, chains confirmations, reformulates inconclusive paths, and repeats until done.
 
-- `authz-security` for authorization and multi-tenant access control
-- `crypto-secrets` for hardcoded secrets, weak crypto, JWT, TLS, and key-management issues
-- `ci-cd-security` for GitHub Actions and release pipeline risk
-- `supply-chain-security` for dependency and install-time compromise risk
-- `infra-security` for Terraform, Kubernetes, CloudFormation, Docker, and Compose
-- `skill-security` for skills, plugins, MCP servers, and agent tooling
-- `recon-security` only when a live target is explicitly authorized
-- `vulnerability-triage` only when an advisory or inbound report is supplied
-- `offensive-security` last (Phase 6), only after defensive audit and dedupe, when you request subagent-driven exploit validation with written scope
+Requires explicit written scope for live validation. Never attacks production by default. Without written scope, it stays in planning or local-only validation and marks live checks `unsafe_to_test`. `recon-security` remains the focused external recon/pentest workflow; `hacker` is the broader offensive engagement orchestrator.
 
 ```
-Run a full security audit on this repo
-Security posture assessment: .
-Pre-production security review with one executive report
-Validate exploitability of deduped findings with offensive-security
-```
-
-</details>
-
-<details>
-<summary><b>offensive-security</b>: instruction-only autoresearch loop for defensive findings</summary>
-
-Use it when defensive audits found issues and you need to know which are actually exploitable — bug bounty confirmation, autoresearch attack loops, or prioritizing remediation by exploitability, not CWE severity alone.
-
-It is an **instruction-only autoresearch skill**: it tells the agent how to use subagents to ingest defensive JSON, hypothesize, plan scoped sandbox validation, review evidence, evolve, chain new hypotheses from confirmations, reformulate inconclusive paths, and repeat until done. Pair with `hacker` Phase 6. It ships no scripts or validators.
-
-Requires explicit written scope for live validation. Never attacks production by default. Without written scope, the loop still runs under a local-only planning boundary and marks live checks `unsafe_to_test`. Pair with `hacker` Phase 6 after `deduped-findings.json` exists; `hacker` then runs post-offensive `vulnerability-triage` for false-positive/by-design review.
-
-```
+Run a hacker web-app engagement for this scoped lab
+Plan a red-team workflow with phase gates and templates
 Validate these defensive findings: deduped-findings.json
 Can any of these issues actually be exploited?
 Autonomous attack loop on deduped findings with subagents
@@ -240,7 +216,6 @@ npx skills add superagent-ai/skills
 
 # or pick one
 npx skills add superagent-ai/skills --skill hacker -a cursor -y
-npx skills add superagent-ai/skills --skill offensive-security -a cursor -y
 npx skills add superagent-ai/skills --skill ci-cd-security -a cursor -y
 npx skills add superagent-ai/skills --skill skill-security -a cursor -y
 npx skills add superagent-ai/skills --skill authz-security -a cursor -y
@@ -253,14 +228,13 @@ npx skills add superagent-ai/skills --skill infra-security -a cursor -y
 
 Once installed, skills load on their own when a task matches — nothing to remember or invoke by hand.
 
-**Migration:** `security-suite` was renamed to `hacker`. Use `--skill hacker` instead of `--skill security-suite`.
+**Migration:** Use `--skill hacker` for the offensive engagement framework.
 
 ## Repo layout
 
 ```
 skills/
-  hacker/                 SKILL.md + scripts/ (orchestration helpers) + references/
-  offensive-security/     SKILL.md + references/ (instruction-only)
+  hacker/                 SKILL.md + references/ (instruction-only engagement framework)
   ci-cd-security/         SKILL.md + references/
   skill-security/         SKILL.md + scripts/ (scanner) + rules/ (YARA) + references/
   authz-security/         SKILL.md + references/
