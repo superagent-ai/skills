@@ -4,7 +4,7 @@ Use this reference when `hacker` runs in `engagement` mode. It adapts the `offen
 
 ## Operating model
 
-The parent agent owns state, safety, and phase transitions. Subagents provide focused plans, reviews, and evidence analysis. External commands or browser actions are proposed only after the scope gate is satisfied.
+The parent agent owns state, safety, and phase transitions. Subagents provide focused plans, reviews, and evidence analysis. External commands or browser actions are proposed only after the scope gate is satisfied. Browser actions use the `agent-browser` skill (see SKILL.md Dependencies), restricted to in-scope hosts via its domain allowlist.
 
 ```text
 request

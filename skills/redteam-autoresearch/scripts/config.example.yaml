@@ -1,0 +1,47 @@
+# Red-team autoresearch config. Copy to config.yaml and edit.
+# API keys are NOT stored here -- they live in .env (see .env.example).
+
+run:
+  rounds: 5                 # outer evolution rounds
+  cycles_per_round: 50      # inner attack cycles per round
+  max_turns: 3              # PAIR multi-turn refinement cap per cycle
+  concurrency: 4            # parallel cycles
+  rate_limit_per_min: 60    # max model requests/min across all roles
+  out: data/attempts.jsonl
+  seed: 1234                # RNG seed for reproducibility (optional)
+
+# Categories to test and their sampling weights. Set a weight to 0 to disable.
+categories:
+  harmful_content: 1.0
+  jailbreak: 1.0
+  prompt_injection: 1.0
+  backdoor: 0.5
+
+# Each role is configured independently, so you can mix providers.
+# provider: openrouter (default) | ubicloud | openai | custom
+# For ubicloud, base_url is derived as https://{model}.ai.ubicloud.com/v1 if omitted.
+roles:
+  attacker:
+    provider: openrouter
+    model: anthropic/claude-3.7-sonnet
+    temperature: 1.0
+  judge:
+    provider: openrouter
+    model: openai/gpt-4o
+    temperature: 0.0
+  target:
+    provider: openrouter
+    model: meta-llama/llama-3.3-70b-instruct
+    temperature: 0.7
+    # system: "Optional target system prompt."
+
+# Optional: test several targets in one run (round-robins across cycles).
+# If set, this overrides roles.target.
+# targets:
+#   - provider: openrouter
+#     model: meta-llama/llama-3.3-70b-instruct
+#   - provider: ubicloud
+#     model: llama-3-3-70b-turbo
+#     # base_url derived automatically; api_key_env defaults to UBICLOUD_API_KEY
+#   - provider: openai
+#     model: gpt-4o-mini

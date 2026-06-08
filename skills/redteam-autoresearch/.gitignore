@@ -1,0 +1,8 @@
+# Local secrets and generated data -- never commit
+.env
+data/
+scripts/config.yaml
+
+# Python
+__pycache__/
+*.pyc
