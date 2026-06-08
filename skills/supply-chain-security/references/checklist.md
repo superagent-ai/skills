@@ -33,7 +33,7 @@ A flat checklist for vetting a dependency, reviewing a PR that changes dependenc
 - [ ] Present in a committed lockfile with an `integrity` hash (no tarball URL lacking a hash)
 - [ ] Not freshly published — passes the cooldown window, or the recency was consciously accepted (`npm view <pkg> time`)
 - [ ] Provenance verified where supported (`npm audit signatures`), understanding it proves build origin, not publisher authorization
-- [ ] Clean against advisories/malicious-package feeds (`osv-scanner`, `pip-audit`, `cargo audit`, etc.)
+- [ ] Clean against advisories/malicious-package feeds (`osv-scanner`, `pip-audit`, `cargo audit`, etc.; for JS/TS, OWASP `cve-lite-cli` — OSV matching with `--fix` remediation and an `--offline` advisory DB)
 
 ## Per PR diff
 
@@ -49,7 +49,7 @@ A flat checklist for vetting a dependency, reviewing a PR that changes dependenc
 - [ ] `ignore-scripts=true` (or `onlyBuiltDependencies` allowlist) so install hooks don't run unreviewed
 - [ ] Committed `.npmrc`/index config scopes internal names to the private registry; no public fallthrough for internal scopes
 - [ ] Cooldown configured at install (`min-release-age`/`minimumReleaseAge`) **and** on the update bot (Dependabot/Renovate)
-- [ ] Continuous SCA against OSV/advisories; security alerts on
+- [ ] Continuous SCA against OSV/advisories (e.g. `osv-scanner`; for JS/TS, `cve-lite-cli --fail-on high` / `--sarif`, or its GitHub Action pinned to a SHA); security alerts on
 - [ ] If the repo publishes packages: Trusted Publisher (OIDC) not a long-lived token, gated/staged publishing, publish secrets isolated from fork-PR workflows, phishing-resistant MFA
 - [ ] An SBOM is produced per release
 
