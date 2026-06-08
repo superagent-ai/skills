@@ -1,6 +1,7 @@
 ---
 name: hacker
-description: Cursor-native offensive security engagement orchestrator inspired by offensive-claude. Use when the user asks for an authorized offensive engagement, red-team or pentest workflow, Kill Chain style assessment, scoped web/network/cloud/mobile/AD/bug-bounty offensive plan, or exploitability validation of defensive findings. Supports engagement mode and validate-findings mode. Instruction-only: ships no scanners, exploit runners, payload builders, or local scripts.
+description: >-
+  Cursor-native offensive security engagement orchestrator inspired by offensive-claude. Use when the user asks for an authorized offensive engagement, red-team or pentest workflow, Kill Chain style assessment, scoped web/network/cloud/mobile/AD/bug-bounty offensive plan, or exploitability validation of defensive findings. Supports engagement mode and validate-findings mode. Instruction-only: ships no scanners, exploit runners, payload builders, or local scripts.
 ---
 
 # Hacker
