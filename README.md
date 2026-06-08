@@ -26,6 +26,24 @@ Autonomous attack loop on deduped findings with subagents
 </details>
 
 <details>
+<summary><b>redteam-autoresearch</b>: generate LLM guardrail training data via a bounded red-team loop</summary>
+
+Use it when you need to red-team an LLM and turn the results into a dataset — stress-testing a model for harmful content, jailbreaks, prompt injection, or backdoor/trigger behavior, and capturing every attempt as labeled JSONL for fine-tuning guardrails.
+
+It ships a runnable Python harness that runs a bounded attacker → target → judge loop modeled on `hacker`'s autoresearch loop: an upfront round/cycle budget, a per-round gate, and the `confirmed`/`mitigated`/`inconclusive`/`false_positive`/`unsafe_to_test` outcome taxonomy. Models are provider-agnostic over the OpenAI-compatible API — OpenRouter by default (one key, any model id), plus Ubicloud and other inference providers — with keys read from a local `.env`. Every attempt (pass and fail) is recorded; refusals become the `safe` negatives a guardrail needs. An exporter converts the log to Llama Guard (S1–S14) and chat-classification training formats.
+
+It is authorization-first and local-only: run it against models you are authorized to test, and keep generated content local for guardrail training. It complements `hacker` (code/infra exploitability) by targeting model behavior and producing data.
+
+```
+Red-team this model for jailbreaks and prompt injection and build a dataset
+Generate guardrail training data across harmful content, jailbreaks, backdoors
+Run a bounded red-team autoresearch loop for N rounds against an OpenRouter model
+Mine novel jailbreaks at scale and export Llama Guard training JSONL
+```
+
+</details>
+
+<details>
 <summary><b>ci-cd-security</b>: supply-chain and pwn-request bugs in GitHub Actions</summary>
 
 Use it when you're reviewing `.github/workflows/`, hardening a release pipeline, or chasing `pull_request_target`, template injection, action pinning, or cache poisoning.
@@ -216,6 +234,7 @@ npx skills add superagent-ai/skills
 
 # or pick one
 npx skills add superagent-ai/skills --skill hacker -a cursor -y
+npx skills add superagent-ai/skills --skill redteam-autoresearch -a cursor -y
 npx skills add superagent-ai/skills --skill ci-cd-security -a cursor -y
 npx skills add superagent-ai/skills --skill skill-security -a cursor -y
 npx skills add superagent-ai/skills --skill authz-security -a cursor -y
@@ -235,6 +254,7 @@ Once installed, skills load on their own when a task matches — nothing to reme
 ```
 skills/
   hacker/                 SKILL.md + references/ (instruction-only engagement framework)
+  redteam-autoresearch/   SKILL.md + references/ + scripts/ (red-team autoresearch harness)
   ci-cd-security/         SKILL.md + references/
   skill-security/         SKILL.md + scripts/ (scanner) + rules/ (YARA) + references/
   authz-security/         SKILL.md + references/
