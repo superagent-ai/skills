@@ -4,7 +4,7 @@ description: >-
   Run a bounded red-teaming autoresearch loop to generate LLM guardrail training data.
   You (the agent running the skill) are the attacker and the judge: you craft attacks and
   label every response. The only model the harness calls is the target under test, over any
-  OpenAI-compatible API (OpenRouter by default; also Ubicloud and other inference providers),
+  OpenAI-compatible API (OpenRouter, Moonshot/Kimi, Fireworks, Ubicloud, OpenAI, or custom),
   with its key in a local .env. Every attempt (pass and fail) is written to JSONL ready for
   fine-tuning guardrails in Llama Guard format. Use when asked to red-team or stress-test an
   LLM for harmful content, jailbreaks, prompt injection, or backdoor/trigger behavior; to
@@ -56,8 +56,25 @@ This is authorized defensive research: you generate adversarial data to train gu
 ## Setup
 
 1. Install deps: `pip install -r scripts/requirements.txt`. Optional: `pip install sentence-transformers` for semantic novelty (otherwise it falls back to token-Jaccard automatically).
-2. Create your env file: copy `scripts/.env.example` to `.env` in the skill root and set `OPENROUTER_API_KEY` (or `UBICLOUD_API_KEY` / `OPENAI_API_KEY`) for the target.
+2. Create your env file: copy `scripts/.env.example` to `.env` in the skill root and set the key for the target provider (`OPENROUTER_API_KEY`, `MOONSHOT_API_KEY`, `FIREWORKS_API_KEY`, `UBICLOUD_API_KEY`, `OPENAI_API_KEY`, or a custom `api_key_env`).
 3. Copy `scripts/config.example.yaml` to `scripts/config.yaml`, choose the target model, and review the `search` / `attack_styles` blocks.
+
+Direct provider examples:
+
+```yaml
+target:
+  provider: moonshot
+  model: kimi-k2.6
+```
+
+```yaml
+target:
+  provider: fireworks
+  model: accounts/fireworks/models/nvidia-nemotron-3-super-120b-a12b-nvfp4
+```
+
+Model IDs are provider-specific; copy the exact id from the provider catalog. For any other
+OpenAI-compatible API, use `provider: custom` with `base_url` and `api_key_env`.
 
 Scripts: `profile_target.py` (fingerprint), `mutators.py` (expand seeds), `query_target.py`
 (the only model caller), `record.py` (judge -> dataset), `archive.py` (MAP-Elites coverage),

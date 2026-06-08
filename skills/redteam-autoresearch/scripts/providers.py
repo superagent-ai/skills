@@ -2,9 +2,10 @@
 """
 Provider-agnostic, OpenAI-compatible model client for the red-team autoresearch harness.
 
-Default provider is OpenRouter (one OPENROUTER_API_KEY, models selected by id). Ubicloud
-and any other OpenAI-compatible endpoint work by setting provider/base_url/api_key_env in
-the per-role config. API keys are read from a local .env via python-dotenv.
+Default provider is OpenRouter (one OPENROUTER_API_KEY, models selected by id). Named
+OpenAI-compatible providers are available by setting provider/model, and any other
+compatible endpoint works by setting provider/base_url/api_key_env in the per-role
+config. API keys are read from a local .env via python-dotenv.
 
 This module only issues chat-completion requests to the configured endpoints; no data
 leaves them.
@@ -31,6 +32,11 @@ PROVIDERS = {
     "openrouter": {"base_url": "https://openrouter.ai/api/v1", "api_key_env": "OPENROUTER_API_KEY"},
     "ubicloud": {"base_url": None, "api_key_env": "UBICLOUD_API_KEY"},  # base_url is per-model
     "openai": {"base_url": "https://api.openai.com/v1", "api_key_env": "OPENAI_API_KEY"},
+    "moonshot": {"base_url": "https://api.moonshot.ai/v1", "api_key_env": "MOONSHOT_API_KEY"},
+    "fireworks": {
+        "base_url": "https://api.fireworks.ai/inference/v1",
+        "api_key_env": "FIREWORKS_API_KEY",
+    },
     "custom": {"base_url": None, "api_key_env": "OPENAI_API_KEY"},
 }
 
