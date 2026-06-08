@@ -74,6 +74,8 @@ Outputs:
 
 Design safe proof strategies. Prefer minimal validation over exploit expansion.
 
+When several exploit hypotheses need iterative testing, run the bounded autoresearch loop in `autoresearch-loop.md`. Ask the user for a cycle budget first so it never runs indefinitely, and re-check the gate each cycle.
+
 Outputs:
 
 - exploit hypothesis
@@ -96,6 +98,8 @@ Outputs:
 ### Phase 4 - Exploit
 
 Validate findings with the least invasive proof. Do not dump data, brute force credentials, degrade service, or expand access beyond scope.
+
+To iterate across multiple findings or chained hypotheses, drive validation with the bounded autoresearch loop in `autoresearch-loop.md`, using the same upfront cycle-budget question and per-cycle gate re-check.
 
 Outputs:
 
