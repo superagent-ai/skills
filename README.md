@@ -30,14 +30,14 @@ Autonomous attack loop on deduped findings with subagents
 
 Use it when you need to red-team an LLM and turn the results into a dataset — stress-testing a model for harmful content, jailbreaks, prompt injection, or backdoor/trigger behavior, and capturing every attempt as labeled JSONL for fine-tuning guardrails.
 
-**You (the agent running the skill) are the attacker and the judge** — you craft the attacks and label every response. The only model the harness calls is the **target** under test, over any OpenAI-compatible API — OpenRouter by default (one key, any model id), plus Ubicloud and other inference providers — with its key in a local `.env`. The loop is bounded and gated like `hacker`'s, with the `confirmed`/`mitigated`/`inconclusive`/`false_positive`/`unsafe_to_test` outcome taxonomy. A thin harness queries the target and records your judgments; every attempt (pass and fail) is saved, and refusals become the `safe` negatives a guardrail needs. An exporter converts the log to Llama Guard (S1–S14) and chat-classification training formats.
+**You (the agent running the skill) are the attacker and the judge** — you craft the attacks and label every response. The only model the harness calls is the **target** under test, over any OpenAI-compatible API: OpenRouter, Moonshot/Kimi, Fireworks, Ubicloud, OpenAI, or a custom endpoint with its key in `.red-team/.env`. Model IDs are provider-specific, so copy them from the provider catalog. The loop is bounded and gated like `hacker`'s, with the `confirmed`/`mitigated`/`inconclusive`/`false_positive`/`unsafe_to_test` outcome taxonomy. A thin harness queries the target and records your judgments; every attempt (pass and fail) is saved under `.red-team/`, and refusals become the `safe` negatives a guardrail needs. An exporter converts the log to Llama Guard (S1–S14) and chat-classification training formats.
 
 It is authorization-first and local-only: run it against models you are authorized to test, and keep generated content local for guardrail training. It complements `hacker` (code/infra exploitability) by targeting model behavior and producing data.
 
 ```
 Red-team this model for jailbreaks and prompt injection and build a dataset
 Generate guardrail training data across harmful content, jailbreaks, backdoors
-Run a bounded red-team autoresearch loop for N rounds against an OpenRouter model
+Run a bounded red-team autoresearch loop for N rounds against a Kimi, Nemotron, or OpenRouter model
 Mine novel jailbreaks at scale and export Llama Guard training JSONL
 ```
 

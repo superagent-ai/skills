@@ -1,6 +1,6 @@
 # Report Template
 
-The agent writes `data/report.md` at the end of a run (the `report-writer` role can produce
+The agent writes `.red-team/report.md` at the end of a run (the `report-writer` role can produce
 it). Summarize sensitive content; never paste full harmful outputs.
 
 ```markdown

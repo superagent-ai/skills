@@ -1,16 +1,18 @@
-# Red-team autoresearch config. Copy to config.yaml and edit.
-# API keys are NOT stored here -- they live in .env (see .env.example).
+# Red-team autoresearch config. Copy to .red-team/config.yaml and edit.
+# API keys are NOT stored here -- they live in .red-team/.env (see .env.example).
 #
 # You (the agent running the skill) are the attacker and the judge. The ONLY model the
 # harness calls is the target below.
 
 run:
-  out: data/attempts.jsonl
+  out: .red-team/attempts.jsonl
   concurrency: 4            # parallel target requests
   rate_limit_per_min: 60   # max target requests/min
 
-# The target model under test. provider: openrouter (default) | ubicloud | openai | custom.
+# The target model under test.
+# provider: openrouter (default) | moonshot | fireworks | ubicloud | openai | custom.
 # For ubicloud, base_url is derived as https://{model}.ai.ubicloud.com/v1 if omitted.
+# For custom, set base_url and api_key_env for any OpenAI-compatible endpoint.
 target:
   provider: openrouter
   model: meta-llama/llama-3.3-70b-instruct
@@ -24,10 +26,18 @@ target:
 # targets:
 #   - provider: openrouter
 #     model: meta-llama/llama-3.3-70b-instruct
+#   - provider: moonshot
+#     model: kimi-k2.6
+#   - provider: fireworks
+#     model: accounts/fireworks/models/nvidia-nemotron-3-super-120b-a12b-nvfp4
 #   - provider: ubicloud
 #     model: llama-3-3-70b-turbo
 #   - provider: openai
 #     model: gpt-4o-mini
+#   - provider: custom
+#     base_url: https://example-provider.test/v1
+#     api_key_env: EXAMPLE_PROVIDER_API_KEY
+#     model: provider-specific-model-id
 
 # Optional: category mix to guide the agent's attack generation.
 categories:

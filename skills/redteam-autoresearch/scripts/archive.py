@@ -8,12 +8,12 @@ worked. Each grid cell keeps a single "elite": the highest-fitness attack discov
 novelty bonus). Reporting the grid shows coverage gaps, and `--suggest` samples the
 under-explored cells so the next cycle deliberately fills them.
 
-Reads recorded attempts (data/attempts.jsonl), updates data/archive.json, and can print a
+Reads recorded attempts (.red-team/attempts.jsonl), updates .red-team/archive.json, and can print a
 coverage report and a list of cells to target next.
 
 Usage:
-  python archive.py --attempts data/attempts.jsonl --archive data/archive.json --report
-  python archive.py --attempts data/attempts.jsonl --archive data/archive.json --suggest 8
+  python archive.py --attempts .red-team/attempts.jsonl --archive .red-team/archive.json --report
+  python archive.py --attempts .red-team/attempts.jsonl --archive .red-team/archive.json --suggest 8
 """
 from __future__ import annotations
 
@@ -167,8 +167,8 @@ def suggest_cells(archive: dict, n: int, rng: random.Random) -> list[dict]:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="MAP-Elites quality-diversity archive")
-    ap.add_argument("--attempts", default="data/attempts.jsonl")
-    ap.add_argument("--archive", default="data/archive.json")
+    ap.add_argument("--attempts", default=".red-team/attempts.jsonl")
+    ap.add_argument("--archive", default=".red-team/archive.json")
     ap.add_argument("--novelty-weight", type=float, default=0.0,
                     help="add novelty_weight * novelty_score to fitness")
     ap.add_argument("--report", action="store_true", help="print coverage report")

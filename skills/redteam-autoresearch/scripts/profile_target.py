@@ -10,7 +10,7 @@ configuration. No harmful content is elicited. This calls the configured target 
 model query_target.py uses).
 
 Usage:
-  python profile_target.py --config config.yaml [--out data/target_profile.json]
+  python profile_target.py --config .red-team/config.yaml [--out .red-team/target_profile.json]
 """
 from __future__ import annotations
 
@@ -139,7 +139,7 @@ def derive_recommendations(probes: dict) -> dict:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Fingerprint the target and recommend attack styles")
     ap.add_argument("--config", required=True)
-    ap.add_argument("--out", default="data/target_profile.json")
+    ap.add_argument("--out", default=".red-team/target_profile.json")
     args = ap.parse_args(argv)
 
     cfg = load_config(Path(args.config))
