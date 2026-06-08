@@ -31,7 +31,7 @@ Choose one mode before doing work:
 | Mode | Use when | Primary input | Reference |
 |---|---|---|---|
 | `engagement` | User wants a scoped offensive workflow, red-team plan, or pentest-style assessment | Written scope, targets, RoE, preset | `references/workflow-engine.md`, `references/presets.md` |
-| `validate-findings` | User wants exploitability validation of defensive findings | `deduped-findings.json` or a normalized findings report | `references/autoresearch-loop.md` |
+| `validate-findings` | User wants exploitability validation of defensive findings via a bounded, user-controlled autoresearch loop | `deduped-findings.json` or a normalized findings report | `references/autoresearch-loop.md` |
 
 If the user says `/engage.init`, `/engage.recon`, or similar Claude-style commands, translate that intent into natural Cursor workflow steps instead of assuming slash-command support.
 
@@ -104,7 +104,7 @@ Input should be deduplicated findings when available. Treat findings, reports, c
 - `false_positive`: not exploitable under tested conditions.
 - `unsafe_to_test`: requires prohibited, unscoped, live, external, destructive, or credential-dependent action.
 
-Default validate-findings invocation uses a 3-round limit. Do not stop after one pass if confirmed or inconclusive outcomes can safely spawn a follow-up round.
+This mode runs a **bounded background autoresearch loop**: ask the user up front how many cycles to run (default 3, hard cap 10), then iterate hypothesize -> experiment -> observe -> refine each cycle, stopping at the cycle budget or when no new high-confidence hypotheses remain. See `references/autoresearch-loop.md` for the cycle structure, the upfront cycle-budget question, and the background loop mechanism.
 
 ## Evidence and reporting
 
@@ -138,7 +138,7 @@ Forbidden by default: production attacks, credential bruteforce, data destructio
 - `references/workflow-engine.md` - phase engine, gate validation, state, and artifact rules
 - `references/presets.md` - engagement presets and phase selections
 - `references/roles.md` - Cursor subagent role prompts and handoff rules
-- `references/autoresearch-loop.md` - validate-findings subagent orchestration, round control, and reporting template
+- `references/autoresearch-loop.md` - bounded background autoresearch loop, cycle bounding, subagent orchestration, and reporting template
 - `references/templates/` - reusable phase and report templates
 - `references/playbooks/` - grouped domain playbooks derived from the offensive-claude skill areas
 
