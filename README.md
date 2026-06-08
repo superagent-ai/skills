@@ -7,11 +7,11 @@ Each skill ships in the open [Agent Skills](https://agentskills.io/) format and 
 ## Skills
 
 <details>
-<summary><b>hacker</b>: Cursor-native offensive engagement and exploitability validation</summary>
+<summary><b>hacker</b>: offensive engagement and exploitability validation</summary>
 
-Use it when you need an authorized offensive workflow inspired by `offensive-claude`: scoped web, network, cloud, mobile, Active Directory, bug bounty, or red-team engagement planning with phase gates, role handoffs, templates, and reports. Use `validate-findings` mode when defensive audits found issues and you need to know which are actually exploitable.
+Use it when you need an authorized offensive workflow for scoped web, network, cloud, mobile, Active Directory, bug bounty, or red-team engagement planning with phase gates, role handoffs, templates, and reports. Use `validate-findings` mode when defensive audits found issues and you need to know which are actually exploitable.
 
-It is **instruction-only**: it ships no scanners, validators, payload builders, exploit runners, or local scripts. In `engagement` mode, it routes through Kill Chain style phases with scope gates and Cursor subagent roles. In `validate-findings` mode, it ingests defensive JSON, hypothesizes, plans scoped sandbox validation, reviews evidence, evolves, chains confirmations, reformulates inconclusive paths, and repeats until done.
+It is **instruction-only**: it ships no scanners, validators, payload builders, exploit runners, or local scripts. In `engagement` mode, it routes through Kill Chain style phases with scope gates and role-based subagent handoffs. In `validate-findings` mode, it ingests defensive JSON, hypothesizes, plans scoped sandbox validation, reviews evidence, evolves, chains confirmations, reformulates inconclusive paths, and repeats until done.
 
 Requires explicit written scope for live validation. Never attacks production by default. Without written scope, it stays in planning or local-only validation and marks live checks `unsafe_to_test`. `recon-security` remains the focused external recon/pentest workflow; `hacker` is the broader offensive engagement orchestrator.
 
