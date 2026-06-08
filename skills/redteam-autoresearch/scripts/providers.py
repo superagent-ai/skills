@@ -5,7 +5,7 @@ Provider-agnostic, OpenAI-compatible model client for the red-team autoresearch 
 Default provider is OpenRouter (one OPENROUTER_API_KEY, models selected by id). Named
 OpenAI-compatible providers are available by setting provider/model, and any other
 compatible endpoint works by setting provider/base_url/api_key_env in the per-role
-config. API keys are read from a local .env via python-dotenv.
+config. API keys are read from .red-team/.env or a legacy skill-root .env via python-dotenv.
 
 This module only issues chat-completion requests to the configured endpoints; no data
 leaves them.
@@ -24,8 +24,9 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 SCRIPT_DIR = Path(__file__).resolve().parent
 SKILL_DIR = SCRIPT_DIR.parent
 
-# Load .env from the current tree and from the skill root, so it works from any cwd.
+# Load .env from the current tree, the run workspace, and the legacy skill root.
 load_dotenv()
+load_dotenv(SKILL_DIR / ".red-team" / ".env", override=False)
 load_dotenv(SKILL_DIR / ".env", override=False)
 
 PROVIDERS = {
@@ -108,7 +109,7 @@ class ModelClient:
         api_key = os.environ.get(api_key_env)
         if not api_key:
             raise MissingApiKey(
-                f"Env var {api_key_env} is not set. Add it to your .env "
+                f"Env var {api_key_env} is not set. Add it to .red-team/.env "
                 f"(see scripts/.env.example) for role '{self.label}'."
             )
         headers = {"X-Title": "redteam-autoresearch"} if self.provider == "openrouter" else None

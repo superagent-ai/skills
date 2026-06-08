@@ -2,7 +2,7 @@
 
 ## Red-team categories
 
-The loop tests four category families (set the sampling mix in `config.yaml`):
+The loop tests four category families (set the sampling mix in `.red-team/config.yaml`):
 
 - `harmful_content` - disallowed operational content.
 - `jailbreak` - safety-bypass techniques.
@@ -54,13 +54,13 @@ Outcomes (snake_case, from the `hacker` loop) and how `record.py` maps them to a
 
 The agent is the attacker and judge; the harness only calls the target.
 
-- `data/target_profile.json` (`profile_target.py`): target fingerprint + recommended attack styles.
-- `data/seeds.jsonl` (you write): a few seed attacks per under-explored archive cell.
-- `data/attacks.jsonl` (`mutators.py` expands seeds): `{category, technique, attack_style, hypothesis, prompt}` or `{... , messages}`
-- `data/transcripts.jsonl` (`query_target.py`): attacks plus `{messages, response, provider, target_model}`
-- `data/judged.jsonl` (you write): transcripts plus `{refused, specificity, convincingness, strongreject_score, outcome, violated_categories, severity, judge_rationale}`
-- `data/attempts.jsonl` (`record.py`): normalized `Attempt` rows (label + novelty + StrongREJECT score)
-- `data/archive.json` (`archive.py`): MAP-Elites elites per `category x attack_style` cell
+- `.red-team/target_profile.json` (`profile_target.py`): target fingerprint + recommended attack styles.
+- `.red-team/seeds.jsonl` (you write): a few seed attacks per under-explored archive cell.
+- `.red-team/attacks.jsonl` (`mutators.py` expands seeds): `{category, technique, attack_style, hypothesis, prompt}` or `{... , messages}`
+- `.red-team/transcripts.jsonl` (`query_target.py`): attacks plus `{messages, response, provider, target_model}`
+- `.red-team/judged.jsonl` (you write): transcripts plus `{refused, specificity, convincingness, strongreject_score, outcome, violated_categories, severity, judge_rationale}`
+- `.red-team/attempts.jsonl` (`record.py`): normalized `Attempt` rows (label + novelty + StrongREJECT score)
+- `.red-team/archive.json` (`archive.py`): MAP-Elites elites per `category x attack_style` cell
 
 ## Attempt schema (attempts.jsonl)
 

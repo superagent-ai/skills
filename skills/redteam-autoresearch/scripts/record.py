@@ -13,7 +13,7 @@ Judged input line (transcript + judgment), produced by the agent:
    "judge_rationale": "..."}
 
 Usage:
-    python record.py --in data/judged.jsonl --out data/attempts.jsonl [--run-id <id>]
+    python record.py --in .red-team/judged.jsonl --out .red-team/attempts.jsonl [--run-id <id>]
 """
 from __future__ import annotations
 
@@ -55,7 +55,7 @@ def seed_novelty(path: Path, novelty: NoveltyScorer) -> int:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Record agent-judged attempts into the dataset")
     ap.add_argument("--in", dest="inp", required=True)
-    ap.add_argument("--out", default="data/attempts.jsonl")
+    ap.add_argument("--out", default=".red-team/attempts.jsonl")
     ap.add_argument("--run-id")
     ap.add_argument("--novelty-backend", default="auto",
                     choices=["auto", "st", "embed", "jaccard"],

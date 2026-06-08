@@ -15,10 +15,10 @@ Output JSONL (one transcript per line): the input fields plus
   {"messages": <full conversation incl. assistant>, "response": "...", "provider", "target_model"}
 
 Usage:
-    python query_target.py --config config.yaml --in data/attacks.jsonl \
-        --out data/transcripts.jsonl [--concurrency 4] [--rate-limit 60]
+    python query_target.py --config .red-team/config.yaml --in .red-team/attacks.jsonl \
+        --out .red-team/transcripts.jsonl [--concurrency 4] [--rate-limit 60]
 
-Reads the target API key from .env (see .env.example). No other model is called.
+Reads the target API key from .red-team/.env (see .env.example). No other model is called.
 """
 from __future__ import annotations
 

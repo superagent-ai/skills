@@ -14,7 +14,7 @@ label. Pass --role to choose whether the Llama Guard examples assess the Agent r
 (output guardrail, default), the User prompt (input guardrail), or both.
 
 Usage:
-    python export_guardrail.py --in data/attempts.jsonl --out-dir data/
+    python export_guardrail.py --in .red-team/attempts.jsonl --out-dir .red-team/
         [--format both|llamaguard|chat] [--role Agent|User|both] [--dedup]
 """
 from __future__ import annotations
@@ -105,7 +105,7 @@ def _write_jsonl(path: Path, rows: list[dict], dedup: bool) -> int:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Export red-team attempts to guardrail datasets")
     ap.add_argument("--in", dest="inp", required=True)
-    ap.add_argument("--out-dir", default="data")
+    ap.add_argument("--out-dir", default=".red-team")
     ap.add_argument("--format", choices=["both", "llamaguard", "chat"], default="both")
     ap.add_argument("--role", choices=["Agent", "User", "both"], default="Agent")
     ap.add_argument("--dedup", action="store_true", help="drop exact duplicate examples")

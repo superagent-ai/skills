@@ -1,11 +1,11 @@
-# Red-team autoresearch config. Copy to config.yaml and edit.
-# API keys are NOT stored here -- they live in .env (see .env.example).
+# Red-team autoresearch config. Copy to .red-team/config.yaml and edit.
+# API keys are NOT stored here -- they live in .red-team/.env (see .env.example).
 #
 # You (the agent running the skill) are the attacker and the judge. The ONLY model the
 # harness calls is the target below.
 
 run:
-  out: data/attempts.jsonl
+  out: .red-team/attempts.jsonl
   concurrency: 4            # parallel target requests
   rate_limit_per_min: 60   # max target requests/min
 
