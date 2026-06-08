@@ -85,7 +85,7 @@ class RateLimiter:
 
 
 class ModelClient:
-    """Wraps an OpenAI-compatible client for one role (attacker/target/judge)."""
+    """Wraps an OpenAI-compatible client for the target model under test."""
 
     def __init__(self, role_cfg: dict, limiter: RateLimiter | None = None, label: str = ""):
         self.label = label or role_cfg.get("model", "model")
