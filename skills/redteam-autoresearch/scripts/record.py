@@ -13,7 +13,8 @@ Judged input line (transcript + judgment), produced by the agent:
    "judge_rationale": "..."}
 
 Usage:
-    python record.py --in .red-team/judged.jsonl --out .red-team/attempts.jsonl [--run-id <id>]
+    python record.py --run-dir .red-team/runs/<run_id> \
+        [--in <run_dir>/judged.jsonl] [--out <run_dir>/attempts.jsonl] [--run-id <id>]
 """
 from __future__ import annotations
 
@@ -30,6 +31,7 @@ from schema import (  # noqa: E402
     JsonlWriter, build_attempt, new_id, normalize_judgment,
 )
 from novelty import NoveltyScorer  # noqa: E402
+from run_context import resolve_run_context  # noqa: E402
 
 
 def seed_novelty(path: Path, novelty: NoveltyScorer) -> int:
@@ -54,24 +56,27 @@ def seed_novelty(path: Path, novelty: NoveltyScorer) -> int:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Record agent-judged attempts into the dataset")
-    ap.add_argument("--in", dest="inp", required=True)
-    ap.add_argument("--out", default=".red-team/attempts.jsonl")
+    ap.add_argument("--run-dir", help="isolated run artifact directory")
+    ap.add_argument("--in", dest="inp")
+    ap.add_argument("--out")
     ap.add_argument("--run-id")
     ap.add_argument("--novelty-backend", default="auto",
                     choices=["auto", "st", "embed", "jaccard"],
                     help="semantic novelty backend (auto falls back to token-Jaccard)")
     args = ap.parse_args(argv)
 
-    out_path = Path(args.out)
+    ctx = resolve_run_context(run_dir=args.run_dir, create=True)
+    input_path = Path(args.inp) if args.inp else ctx.path("judged.jsonl")
+    out_path = Path(args.out) if args.out else ctx.path("attempts.jsonl")
     novelty = NoveltyScorer(backend=args.novelty_backend)
     seeded = seed_novelty(out_path, novelty)
-    run_id = args.run_id or new_id()
+    run_id = args.run_id or ctx.run_id or new_id()
 
     writer = JsonlWriter(out_path)
     counts: dict[str, int] = {}
     written = 0
     try:
-        with open(args.inp, encoding="utf-8") as f:
+        with input_path.open(encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if not line:

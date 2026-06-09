@@ -78,7 +78,7 @@ refusal. Pair with an `encoding_obfuscation` or `persuasion_social` framing for 
 
 1. Pick goals from a behavior corpus for the categories you are sampling this cycle.
 2. Pick techniques/styles from the technique corpora + method papers, matched to the target
-   profile (`.red-team/target_profile.json`).
+   profile (`<run_dir>/target_profile.json`).
 3. Write a few seeds, expand with `scripts/mutators.py`, and let the archive steer you toward
    under-explored cells.
 4. Between rounds, web-search for newer work (use the current year) and add one-line, abstract,

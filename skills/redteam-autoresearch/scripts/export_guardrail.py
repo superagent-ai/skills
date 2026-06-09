@@ -14,7 +14,7 @@ label. Pass --role to choose whether the Llama Guard examples assess the Agent r
 (output guardrail, default), the User prompt (input guardrail), or both.
 
 Usage:
-    python export_guardrail.py --in .red-team/attempts.jsonl --out-dir .red-team/
+    python export_guardrail.py --run-dir .red-team/runs/<run_id>
         [--format both|llamaguard|chat] [--role Agent|User|both] [--dedup]
 """
 from __future__ import annotations
@@ -29,6 +29,7 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 from schema import HAZARD_CODES  # noqa: E402
+from run_context import resolve_run_context  # noqa: E402
 
 _HAZARD_BLOCK = "\n".join(f"{code}: {name}" for code, name in HAZARD_CODES.items())
 
@@ -104,21 +105,24 @@ def _write_jsonl(path: Path, rows: list[dict], dedup: bool) -> int:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Export red-team attempts to guardrail datasets")
-    ap.add_argument("--in", dest="inp", required=True)
-    ap.add_argument("--out-dir", default=".red-team")
+    ap.add_argument("--run-dir", help="isolated run artifact directory")
+    ap.add_argument("--in", dest="inp")
+    ap.add_argument("--out-dir")
     ap.add_argument("--format", choices=["both", "llamaguard", "chat"], default="both")
     ap.add_argument("--role", choices=["Agent", "User", "both"], default="Agent")
     ap.add_argument("--dedup", action="store_true", help="drop exact duplicate examples")
     args = ap.parse_args(argv)
 
-    out_dir = Path(args.out_dir)
+    ctx = resolve_run_context(run_dir=args.run_dir, create=True)
+    input_path = Path(args.inp) if args.inp else ctx.path("attempts.jsonl")
+    out_dir = Path(args.out_dir) if args.out_dir else ctx.run_dir
     out_dir.mkdir(parents=True, exist_ok=True)
     roles = ["Agent", "User"] if args.role == "both" else [args.role]
 
     kept = 0
     lg_rows: list[dict] = []
     chat_rows: list[dict] = []
-    with open(args.inp, encoding="utf-8") as f:
+    with input_path.open(encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if not line:

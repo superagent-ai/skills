@@ -16,11 +16,11 @@ flowchart TD
   gate["Authorization + .red-team/.env gate"] --> profile["PROFILE: scripts/profile_target.py"]
   profile --> learn["LEARN: seed-bank + web research -> seed goals & techniques"]
   learn --> select["SELECT: archive.py --suggest -> under-explored (category x style) cells"]
-  select --> generate["GENERATE: write a few seeds per cell -> .red-team/seeds.jsonl"]
+  select --> generate["GENERATE: write a few seeds per cell -> run_dir/seeds.jsonl"]
   generate --> expand["EXPAND: mutators.py (encoding, dividers, persuasion, many-shot, best-of-N)"]
-  expand --> query["QUERY: query_target.py -> .red-team/transcripts.jsonl"]
-  query --> judge["JUDGE: StrongREJECT rubric -> .red-team/judged.jsonl"]
-  judge --> record["RECORD: record.py (+ semantic novelty) -> .red-team/attempts.jsonl"]
+  expand --> query["QUERY: query_target.py -> run_dir/transcripts.jsonl"]
+  query --> judge["JUDGE: StrongREJECT rubric -> run_dir/judged.jsonl"]
+  judge --> record["RECORD: record.py (+ semantic novelty) -> run_dir/attempts.jsonl"]
   record --> archivestep["ARCHIVE: archive.py update elites + coverage"]
   archivestep --> refine{"promising miss? (refused but close)"}
   refine -->|yes| tap["TAP/PAIR refine: branch + prune + re-query"]
@@ -31,15 +31,15 @@ flowchart TD
 
 ## PROFILE the target first
 
-Run `scripts/profile_target.py --config .red-team/config.yaml` once per target. It fingerprints the model
+Run `scripts/profile_target.py --run-dir "$REDTEAM_RUN_DIR"` once per target. It fingerprints the model
 with benign probes (decodes Base64/leetspeak? follows an override? leaks its system prompt?
-plays a persona? handles long context?) and writes `.red-team/target_profile.json` with
+plays a persona? handles long context?) and writes `<run_dir>/target_profile.json` with
 `recommended_styles`. Spend budget on styles the target is actually susceptible to; do not waste
 queries on encoding attacks against a model that cannot decode.
 
 ## Quality-diversity archive (Rainbow Teaming / MAP-Elites)
 
-The archive (`scripts/archive.py`, persisted to `.red-team/archive.json`) is a grid of
+The archive (`scripts/archive.py`, persisted to `<run_dir>/archive.json`) is a grid of
 `category x attack_style` cells (see `ATTACK_STYLES` in `scripts/schema.py`). Each cell holds one
 elite: the highest-fitness attack found for that combination.
 
@@ -81,7 +81,7 @@ for depth in 1..D:
   roots = top-`width` leaves by score                        # keep the best, prune the rest
 ```
 
-Config (`.red-team/config.yaml` -> `search.tap`): `branching_factor` (B), `width`, `depth` (D), and
+Config (`<run_dir>/config.yaml` -> `search.tap`): `branching_factor` (B), `width`, `depth` (D), and
 `success_score`. Pruning before querying keeps target calls cheap (the TAP property). Multi-turn
 strategies (Crescendo) are run here too: each "turn" is a query, and you escalate using the
 target's own previous answer as context.

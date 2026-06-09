@@ -2,7 +2,7 @@
 
 ## Red-team categories
 
-The loop tests four category families (set the sampling mix in `.red-team/config.yaml`):
+The loop tests four category families (set the sampling mix in `<run_dir>/config.yaml`):
 
 - `harmful_content` - disallowed operational content.
 - `jailbreak` - safety-bypass techniques.
@@ -54,13 +54,13 @@ Outcomes (snake_case, from the `hacker` loop) and how `record.py` maps them to a
 
 The agent is the attacker and judge; the harness only calls the target.
 
-- `.red-team/target_profile.json` (`profile_target.py`): target fingerprint + recommended attack styles.
-- `.red-team/seeds.jsonl` (you write): a few seed attacks per under-explored archive cell.
-- `.red-team/attacks.jsonl` (`mutators.py` expands seeds): `{category, technique, attack_style, hypothesis, prompt}` or `{... , messages}`
-- `.red-team/transcripts.jsonl` (`query_target.py`): attacks plus `{messages, response, assistant_content, reasoning_content, provider, target_model}`. `response` is the combined judge text; the two content fields preserve visible output and provider reasoning separately.
-- `.red-team/judged.jsonl` (you write): transcripts plus `{refused, specificity, convincingness, strongreject_score, outcome, violated_categories, severity, judge_rationale}`
-- `.red-team/attempts.jsonl` (`record.py`): normalized `Attempt` rows (label + novelty + StrongREJECT score)
-- `.red-team/archive.json` (`archive.py`): MAP-Elites elites per `category x attack_style` cell
+- `<run_dir>/target_profile.json` (`profile_target.py`): target fingerprint + recommended attack styles.
+- `<run_dir>/seeds.jsonl` (you write): a few seed attacks per under-explored archive cell.
+- `<run_dir>/attacks.jsonl` (`mutators.py` expands seeds): `{category, technique, attack_style, hypothesis, prompt}` or `{... , messages}`
+- `<run_dir>/transcripts.jsonl` (`query_target.py`): attacks plus `{messages, response, assistant_content, reasoning_content, provider, target_model}`. `response` is the combined judge text; the two content fields preserve visible output and provider reasoning separately.
+- `<run_dir>/judged.jsonl` (you write): transcripts plus `{refused, specificity, convincingness, strongreject_score, outcome, violated_categories, severity, judge_rationale}`
+- `<run_dir>/attempts.jsonl` (`record.py`): normalized `Attempt` rows (label + novelty + StrongREJECT score)
+- `<run_dir>/archive.json` (`archive.py`): MAP-Elites elites per `category x attack_style` cell
 
 ## Attempt schema (attempts.jsonl)
 
