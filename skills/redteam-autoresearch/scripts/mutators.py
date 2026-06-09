@@ -3,8 +3,8 @@
 Deterministic attack mutators: expand a small set of agent-authored seed attacks into a large,
 diverse batch of concrete probes, scaling the loop without a model call per probe.
 
-You (the agent) write a few seed attacks to a JSONL; this script applies the transforms an
-expert model breaker uses -- encoding tiers, Pliny-style dividers / GODMODE wrappers, boundary
+You (the agent running this skill) write a few seed attacks to a JSONL; this script applies the
+transforms an expert model breaker uses -- encoding tiers, Pliny-style dividers / GODMODE wrappers, boundary
 and refusal inversion, PAP persuasion scaffolds, a many-shot faux-dialogue packer, and a
 best-of-N augmenter -- and writes the expanded batch ready for query_target.py.
 
