@@ -55,7 +55,7 @@ This is authorized defensive research: you generate adversarial data to train gu
 
 ## Setup
 
-1. Install deps: `pip install -r scripts/requirements.txt`. Optional: `pip install sentence-transformers` for semantic novelty (otherwise it falls back to token-Jaccard automatically).
+1. Install deps: `uv pip install -r scripts/requirements.txt`. Optional: `uv pip install sentence-transformers` for semantic novelty (otherwise it falls back to token-Jaccard automatically).
 2. Create the run workspace: `mkdir -p .red-team`.
 3. Create your env file: copy `scripts/.env.example` to `.red-team/.env` and set the key for the target provider (`OPENROUTER_API_KEY`, `MOONSHOT_API_KEY`, `FIREWORKS_API_KEY`, `UBICLOUD_API_KEY`, `OPENAI_API_KEY`, or a custom `api_key_env`).
 4. Copy `scripts/config.example.yaml` to `.red-team/config.yaml`, choose the target model, and review the `search` / `attack_styles` blocks.

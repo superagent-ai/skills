@@ -7,7 +7,7 @@ fitness signal (curiosity-driven red teaming): a batch full of near-duplicates s
 the loop is steered toward genuinely new attack families.
 
 Backends (auto-selected, with graceful fallback so the harness always runs):
-  - "st"      : sentence-transformers embeddings (best; install: pip install sentence-transformers)
+  - "st"      : sentence-transformers embeddings (best; install: uv pip install sentence-transformers)
   - "embed"   : an OpenAI-compatible embeddings endpoint (set EMBED_API_KEY / EMBED_BASE_URL /
                 EMBED_MODEL, or pass embed_cfg)
   - "jaccard" : token-set Jaccard (no deps; same behavior as the original NoveltyIndex)
