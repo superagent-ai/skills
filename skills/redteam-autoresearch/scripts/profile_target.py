@@ -10,13 +10,15 @@ configuration. No harmful content is elicited. This calls the configured target 
 model query_target.py uses).
 
 Usage:
-  python profile_target.py --config .red-team/config.yaml [--out .red-team/target_profile.json]
+  python profile_target.py --run-dir .red-team/runs/<run_id> \
+      [--config <run_dir>/config.yaml] [--out <run_dir>/target_profile.json]
 """
 from __future__ import annotations
 
 import argparse
 import base64
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -27,6 +29,7 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 from providers import MissingApiKey, ModelClient, RateLimiter  # noqa: E402
+from run_context import DEFAULT_CONFIG, RUN_DIR_ENV, resolve_run_context  # noqa: E402
 
 _REFUSAL_MARKERS = (
     "i can't", "i cannot", "i can not", "i'm sorry", "i am sorry", "i'm unable",
@@ -138,11 +141,15 @@ def derive_recommendations(probes: dict) -> dict:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Fingerprint the target and recommend attack styles")
-    ap.add_argument("--config", required=True)
-    ap.add_argument("--out", default=".red-team/target_profile.json")
+    ap.add_argument("--config")
+    ap.add_argument("--run-dir", help="isolated run artifact directory")
+    ap.add_argument("--out")
     args = ap.parse_args(argv)
 
-    cfg = load_config(Path(args.config))
+    run_dir_hint = args.run_dir or os.environ.get(RUN_DIR_ENV)
+    cfg_path = Path(args.config) if args.config else Path(run_dir_hint) / "config.yaml" if run_dir_hint else DEFAULT_CONFIG
+    cfg = load_config(cfg_path)
+    ctx = resolve_run_context(cfg, args.run_dir, create=True)
     try:
         client = build_target(cfg)
     except MissingApiKey as exc:
@@ -159,7 +166,7 @@ def main(argv=None) -> int:
         "probes": probes, **rec,
     }
 
-    out_path = Path(args.out)
+    out_path = Path(args.out) if args.out else ctx.path("target_profile.json")
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(profile, ensure_ascii=False, indent=2), encoding="utf-8")
 

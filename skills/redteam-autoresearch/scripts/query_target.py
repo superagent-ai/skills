@@ -17,8 +17,9 @@ Output JSONL (one transcript per line): the input fields plus
    "target_model"}
 
 Usage:
-    python query_target.py --config .red-team/config.yaml --in .red-team/attacks.jsonl \
-        --out .red-team/transcripts.jsonl [--concurrency 4] [--rate-limit 60]
+    python query_target.py --run-dir .red-team/runs/<run_id> \
+        [--config <run_dir>/config.yaml] [--in <run_dir>/attacks.jsonl] \
+        [--out <run_dir>/transcripts.jsonl] [--concurrency 4] [--rate-limit 60]
 
 Reads the target API key from .red-team/.env (see .env.example). No other model is called.
 """
@@ -26,6 +27,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -38,6 +40,7 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 from providers import MissingApiKey, ModelClient, RateLimiter  # noqa: E402
+from run_context import DEFAULT_CONFIG, RUN_DIR_ENV, resolve_run_context  # noqa: E402
 from schema import new_id  # noqa: E402
 
 
@@ -86,14 +89,18 @@ def query_one(attack: dict, target: ModelClient) -> dict:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Query the target model with agent-authored attacks")
-    ap.add_argument("--config", required=True)
-    ap.add_argument("--in", dest="inp", required=True)
-    ap.add_argument("--out", required=True)
+    ap.add_argument("--config")
+    ap.add_argument("--run-dir", help="isolated run artifact directory")
+    ap.add_argument("--in", dest="inp")
+    ap.add_argument("--out")
     ap.add_argument("--concurrency", type=int)
     ap.add_argument("--rate-limit", type=float, help="target requests per minute")
     args = ap.parse_args(argv)
 
-    cfg = load_config(Path(args.config))
+    run_dir_hint = args.run_dir or os.environ.get(RUN_DIR_ENV)
+    cfg_path = Path(args.config) if args.config else Path(run_dir_hint) / "config.yaml" if run_dir_hint else DEFAULT_CONFIG
+    cfg = load_config(cfg_path)
+    ctx = resolve_run_context(cfg, args.run_dir, create=True)
     run_cfg = cfg.get("run", {})
     concurrency = args.concurrency or int(run_cfg.get("concurrency", 4))
     rate_limit = args.rate_limit if args.rate_limit is not None else float(run_cfg.get("rate_limit_per_min", 60))
@@ -109,7 +116,8 @@ def main(argv=None) -> int:
         return 2
 
     attacks = []
-    with open(args.inp, encoding="utf-8") as f:
+    input_path = Path(args.inp) if args.inp else ctx.path("attacks.jsonl")
+    with input_path.open(encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if line:
@@ -118,7 +126,7 @@ def main(argv=None) -> int:
         print("No attacks in input.", file=sys.stderr)
         return 1
 
-    out_path = Path(args.out)
+    out_path = Path(args.out) if args.out else ctx.path("transcripts.jsonl")
     out_path.parent.mkdir(parents=True, exist_ok=True)
     written = 0
     with out_path.open("a", encoding="utf-8") as out_f, \

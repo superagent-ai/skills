@@ -8,12 +8,12 @@ worked. Each grid cell keeps a single "elite": the highest-fitness attack discov
 novelty bonus). Reporting the grid shows coverage gaps, and `--suggest` samples the
 under-explored cells so the next cycle deliberately fills them.
 
-Reads recorded attempts (.red-team/attempts.jsonl), updates .red-team/archive.json, and can print a
+Reads recorded attempts (<run_dir>/attempts.jsonl), updates <run_dir>/archive.json, and can print a
 coverage report and a list of cells to target next.
 
 Usage:
-  python archive.py --attempts .red-team/attempts.jsonl --archive .red-team/archive.json --report
-  python archive.py --attempts .red-team/attempts.jsonl --archive .red-team/archive.json --suggest 8
+  python archive.py --run-dir .red-team/runs/<run_id> --report
+  python archive.py --run-dir .red-team/runs/<run_id> --suggest 8
 """
 from __future__ import annotations
 
@@ -35,6 +35,8 @@ except Exception:  # pragma: no cover - defensive
     _STYLES = ["direct", "roleplay_persona", "hypothetical_fiction", "encoding_obfuscation",
                "authority_appeal", "persuasion_social", "multi_turn_escalation",
                "context_overload", "format_injection", "code_cipher"]
+
+from run_context import resolve_run_context  # noqa: E402
 
 _ELITE_FIELDS = ("id", "category", "attack_style", "technique", "prompt", "outcome",
                  "severity", "strongreject_score", "novelty_score")
@@ -167,8 +169,9 @@ def suggest_cells(archive: dict, n: int, rng: random.Random) -> list[dict]:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="MAP-Elites quality-diversity archive")
-    ap.add_argument("--attempts", default=".red-team/attempts.jsonl")
-    ap.add_argument("--archive", default=".red-team/archive.json")
+    ap.add_argument("--run-dir", help="isolated run artifact directory")
+    ap.add_argument("--attempts")
+    ap.add_argument("--archive")
     ap.add_argument("--novelty-weight", type=float, default=0.0,
                     help="add novelty_weight * novelty_score to fitness")
     ap.add_argument("--report", action="store_true", help="print coverage report")
@@ -176,9 +179,11 @@ def main(argv=None) -> int:
     ap.add_argument("--seed", type=int, default=0)
     args = ap.parse_args(argv)
 
-    archive_path = Path(args.archive)
+    ctx = resolve_run_context(run_dir=args.run_dir, create=True)
+    archive_path = Path(args.archive) if args.archive else ctx.path("archive.json")
     archive = load_archive(archive_path)
-    attempts = load_jsonl(Path(args.attempts))
+    attempts_path = Path(args.attempts) if args.attempts else ctx.path("attempts.jsonl")
+    attempts = load_jsonl(attempts_path)
     archive = update_archive(archive, attempts, args.novelty_weight)
 
     archive_path.parent.mkdir(parents=True, exist_ok=True)

@@ -15,7 +15,7 @@ Seed line (one per line):
   {"category": "...", "technique"?, "attack_style"?, "hypothesis"?, "prompt": "<request>"}
 
 Usage:
-  python mutators.py --in .red-team/seeds.jsonl --out .red-team/attacks.jsonl \
+  python mutators.py --in "$REDTEAM_RUN_DIR/seeds.jsonl" --out "$REDTEAM_RUN_DIR/attacks.jsonl" \
       --tier standard --bon 4 --shots 32 --persuasion expert_endorsement,logical_appeal
   python mutators.py --in s.jsonl --out a.jsonl --ops leetspeak,base64,divider,refusal_inversion --stack
 """

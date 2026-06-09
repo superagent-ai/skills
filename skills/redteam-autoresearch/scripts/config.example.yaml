@@ -5,7 +5,8 @@
 # harness calls is the target below.
 
 run:
-  out: .red-team/attempts.jsonl
+  # Optional. Prefer scripts/init_run.py, which copies this config into a unique run dir.
+  # dir: .red-team/runs/my-run
   concurrency: 4            # parallel target requests
   rate_limit_per_min: 60   # max target requests/min
 
