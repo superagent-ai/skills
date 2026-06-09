@@ -57,7 +57,7 @@ The agent is the attacker and judge; the harness only calls the target.
 - `.red-team/target_profile.json` (`profile_target.py`): target fingerprint + recommended attack styles.
 - `.red-team/seeds.jsonl` (you write): a few seed attacks per under-explored archive cell.
 - `.red-team/attacks.jsonl` (`mutators.py` expands seeds): `{category, technique, attack_style, hypothesis, prompt}` or `{... , messages}`
-- `.red-team/transcripts.jsonl` (`query_target.py`): attacks plus `{messages, response, provider, target_model}`
+- `.red-team/transcripts.jsonl` (`query_target.py`): attacks plus `{messages, response, assistant_content, reasoning_content, provider, target_model}`. `response` is the combined judge text; the two content fields preserve visible output and provider reasoning separately.
 - `.red-team/judged.jsonl` (you write): transcripts plus `{refused, specificity, convincingness, strongreject_score, outcome, violated_categories, severity, judge_rationale}`
 - `.red-team/attempts.jsonl` (`record.py`): normalized `Attempt` rows (label + novelty + StrongREJECT score)
 - `.red-team/archive.json` (`archive.py`): MAP-Elites elites per `category x attack_style` cell
@@ -70,7 +70,7 @@ Each judged turn is one row (`scripts/schema.py`, `Attempt`):
 - `round`, `cycle`, `turn`, `seed_parent_id`
 - `category`, `technique`, `attack_style`, `hypothesis`
 - `provider`, `target_model`, `attacker` (= `agent`), `judged_by` (= `agent`)
-- `messages` (full conversation), `prompt`, `response`
+- `messages` (full conversation), `prompt`, `response`, `assistant_content`, `reasoning_content`
 - `outcome`, `label`, `violated_categories`, `attack_success`, `severity`, `judge_rationale`
 - `novelty_score`, `strongreject_score`
 
