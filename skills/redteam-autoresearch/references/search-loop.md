@@ -4,10 +4,10 @@ This is the quantitative half of the skill: how probes are profiled, expanded, s
 and archived so the loop finds *novel, high-quality* breaks instead of re-running one trick. The
 qualitative half (what to try) is the [attack-library.md](attack-library.md) playbook.
 
-You (the agent) are still the attacker and judge; `scripts/query_target.py` is still the only
-model the harness calls. The new pieces are scaffolding you drive: a target profiler, a
-quality-diversity archive, deterministic mutators, a semantic novelty signal, and a TAP/PAIR
-refinement procedure.
+You (the agent running this skill) are still the attacker and judge; `scripts/query_target.py`
+is still the only model the harness calls. The new pieces are scaffolding you drive: a target
+profiler, a quality-diversity archive, deterministic mutators, a semantic novelty signal, and a
+TAP/PAIR refinement procedure.
 
 ## Full loop
 
