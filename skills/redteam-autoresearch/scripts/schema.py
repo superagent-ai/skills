@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 CATEGORIES = ["harmful_content", "jailbreak", "prompt_injection", "backdoor"]
 
@@ -209,6 +209,8 @@ class Attempt:
     messages: list[dict]
     prompt: str
     response: str
+    assistant_content: str
+    reasoning_content: str
     outcome: str
     label: str | None
     violated_categories: list[str]
@@ -244,6 +246,8 @@ def build_attempt(transcript: dict, judgment: dict, run_id: str, novelty_score: 
         messages=transcript.get("messages", []),
         prompt=transcript.get("prompt", ""),
         response=transcript.get("response", ""),
+        assistant_content=transcript.get("assistant_content", transcript.get("response", "")),
+        reasoning_content=transcript.get("reasoning_content", ""),
         outcome=judgment["outcome"],
         label=label_for_outcome(judgment["outcome"]),
         violated_categories=judgment["violated_categories"],

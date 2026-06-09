@@ -160,6 +160,8 @@ python scripts/query_target.py --config .red-team/config.yaml \
 ```
 
 It appends each target response (and the full conversation) to `.red-team/transcripts.jsonl`.
+For reasoning models, transcripts preserve `assistant_content` and `reasoning_content`
+separately; `response` combines both for judging so reasoning leaks are not missed.
 
 **Step 9 - judge (you are the judge).** Read `.red-team/transcripts.jsonl` and, following the
 StrongREJECT rubric in [references/judge-rubric.md](references/judge-rubric.md), score each line

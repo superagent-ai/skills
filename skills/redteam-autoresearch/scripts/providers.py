@@ -5,7 +5,8 @@ Provider-agnostic, OpenAI-compatible model client for the red-team autoresearch 
 Default provider is OpenRouter (one OPENROUTER_API_KEY, models selected by id). Named
 OpenAI-compatible providers are available by setting provider/model, and any other
 compatible endpoint works by setting provider/base_url/api_key_env in the per-role
-config. API keys are read from .red-team/.env or a legacy skill-root .env via python-dotenv.
+config. API keys are read from the run workspace's .red-team/.env, a skill-local
+.red-team/.env, or a legacy .env via python-dotenv.
 
 This module only issues chat-completion requests to the configured endpoints; no data
 leaves them.
@@ -24,10 +25,15 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 SCRIPT_DIR = Path(__file__).resolve().parent
 SKILL_DIR = SCRIPT_DIR.parent
 
-# Load .env from the current tree, the run workspace, and the legacy skill root.
-load_dotenv()
-load_dotenv(SKILL_DIR / ".red-team" / ".env", override=False)
-load_dotenv(SKILL_DIR / ".env", override=False)
+def load_env_files() -> None:
+    """Load target provider keys without overriding already-exported env vars."""
+    load_dotenv(Path.cwd() / ".red-team" / ".env", override=False)
+    load_dotenv(SKILL_DIR / ".red-team" / ".env", override=False)
+    load_dotenv(override=False)
+    load_dotenv(SKILL_DIR / ".env", override=False)
+
+
+load_env_files()
 
 PROVIDERS = {
     "openrouter": {"base_url": "https://openrouter.ai/api/v1", "api_key_env": "OPENROUTER_API_KEY"},
@@ -44,6 +50,50 @@ PROVIDERS = {
 
 class MissingApiKey(RuntimeError):
     """Raised when the env var for a role's API key is not set."""
+
+
+def _message_field(message, name: str):
+    if isinstance(message, dict):
+        return message.get(name)
+    value = getattr(message, name, None)
+    if value is None and hasattr(message, "model_extra"):
+        value = message.model_extra.get(name)
+    return value
+
+
+def _content_to_text(value) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return value
+    if isinstance(value, list):
+        parts = []
+        for item in value:
+            if isinstance(item, str):
+                parts.append(item)
+            elif isinstance(item, dict):
+                parts.append(str(item.get("text") or item.get("content") or ""))
+            else:
+                parts.append(str(item))
+        return "".join(parts)
+    return str(value)
+
+
+def message_content_parts(message) -> tuple[str, str]:
+    """Return (assistant content, reasoning content) from an OpenAI-compatible message."""
+    content = _content_to_text(_message_field(message, "content")).strip()
+    reasoning = _content_to_text(_message_field(message, "reasoning_content")).strip()
+    return content, reasoning
+
+
+def combined_response_text(content: str, reasoning_content: str) -> str:
+    """Return the text judges should inspect, including hidden/provider reasoning if present."""
+    parts = []
+    if reasoning_content:
+        parts.append(f"[reasoning]\n{reasoning_content}")
+    if content:
+        parts.append(f"[content]\n{content}")
+    return "\n\n".join(parts).strip()
 
 
 def resolve_endpoint(role_cfg: dict) -> tuple[str, str]:
@@ -125,8 +175,8 @@ class ModelClient:
             max_tokens=max_tokens,
         )
 
-    def chat(self, messages, temperature=None, max_tokens=None, system=None) -> str:
-        """Send a chat completion and return the assistant message text."""
+    def chat_response(self, messages, temperature=None, max_tokens=None, system=None) -> dict:
+        """Send a chat completion and return content plus any provider reasoning text."""
         if self._limiter:
             self._limiter.acquire()
         sys_prompt = system if system is not None else self.system
@@ -138,5 +188,15 @@ class ModelClient:
             self.max_tokens if max_tokens is None else max_tokens,
         )
         if not resp.choices:
-            return ""
-        return (resp.choices[0].message.content or "").strip()
+            return {"content": "", "reasoning_content": "", "response": ""}
+        content, reasoning_content = message_content_parts(resp.choices[0].message)
+        response = combined_response_text(content, reasoning_content) or content or reasoning_content
+        return {
+            "content": content,
+            "reasoning_content": reasoning_content,
+            "response": response,
+        }
+
+    def chat(self, messages, temperature=None, max_tokens=None, system=None) -> str:
+        """Send a chat completion and return judge-visible assistant text."""
+        return self.chat_response(messages, temperature, max_tokens, system)["response"]

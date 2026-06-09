@@ -12,7 +12,9 @@ Input JSONL (one attack per line), produced by the agent:
   {... , "messages": [{"role": "user", "content": "..."}, {"role": "assistant", ...}, ...]}
 
 Output JSONL (one transcript per line): the input fields plus
-  {"messages": <full conversation incl. assistant>, "response": "...", "provider", "target_model"}
+  {"messages": <full conversation incl. assistant>, "response": <content+reasoning for judging>,
+   "assistant_content": <visible content>, "reasoning_content": <provider reasoning>, "provider",
+   "target_model"}
 
 Usage:
     python query_target.py --config .red-team/config.yaml --in .red-team/attacks.jsonl \
@@ -65,15 +67,18 @@ def query_one(attack: dict, target: ModelClient) -> dict:
     messages = messages_for(attack)
     out = dict(attack)
     try:
-        response = target.chat(messages)
+        result = target.chat_response(messages)
     except Exception as exc:
-        response = ""
+        result = {"content": "", "reasoning_content": "", "response": ""}
         out["error"] = str(exc)[:200]
+    response = result["response"]
     full = list(messages) + [{"role": "assistant", "content": response}]
     out.setdefault("id", new_id())
     out["messages"] = full
     out["prompt"] = messages[-1]["content"] if messages else ""
     out["response"] = response
+    out["assistant_content"] = result["content"]
+    out["reasoning_content"] = result["reasoning_content"]
     out["provider"] = target.provider
     out["target_model"] = target.model
     return out
