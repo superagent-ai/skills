@@ -29,6 +29,42 @@ flowchart TD
   archivestep --> done["budget spent -> EXPORT + REPORT"]
 ```
 
+## Benchmark mode loop
+
+Exploratory runs can let the archive chase whatever is most promising. Benchmark runs must be
+stratified before generation so every target sees the same difficulty mix.
+
+```mermaid
+flowchart TD
+  design["DESIGN: model x category x style x hazard x difficulty cells"] --> fixed["FIXED SUITE: same seeds + controls per target"]
+  fixed --> queryFixed["QUERY + JUDGE: record fixed-suite ASR"]
+  queryFixed --> adaptive["ADAPTIVE: bounded TAP/PAIR per target"]
+  adaptive --> transfer["TRANSFER: replay confirmed attacks across targets"]
+  transfer --> report["REPORT: fixed ASR, adaptive ASR, transfer ASR"]
+```
+
+Use four difficulty tiers:
+
+- `smoke` - direct baselines and release-gate probes; useful for regressions, usually too easy to
+  differentiate strong models.
+- `standard` - the current mutator-driven suite: archive-selected seeds expanded with encoding,
+  dividers, persuasion, many-shot, and best-of-N.
+- `hard` - realistic environment-style probes: RAG/tool/document injection, holdout personas,
+  matched trigger controls, and multi-turn pressure.
+- `adaptive` - bounded TAP/PAIR refinement plus cross-model transfer. Report separately from the
+  fixed suite because it spends feedback budget.
+
+For benchmark mode, generate a fixed suite first, then run adaptive search. Do not let one model's
+failures consume more target calls than another's. Lock the same maximum calls per target, same
+TAP/PAIR depth/width, same holdout families, and same control count before querying.
+
+Preferred stratification is equal attempts per
+`model x category x attack_style x hazard_target x difficulty`. If that is too expensive, use the
+minimum fair grid: equal attempts per `model x category x difficulty`. Store the cell identity in
+the attack rows (`benchmark_cell`, `difficulty`, `hazard_target`, `seed_family`, `holdout`) so the
+report can macro-average across cells instead of being dominated by whichever cell got the most
+queries.
+
 ## PROFILE the target first
 
 Run `scripts/profile_target.py --run-dir "$REDTEAM_RUN_DIR"` once per target. It fingerprints the model
@@ -86,6 +122,11 @@ Config (`<run_dir>/config.yaml` -> `search.tap`): `branching_factor` (B), `width
 strategies (Crescendo) are run here too: each "turn" is a query, and you escalate using the
 target's own previous answer as context.
 
+In benchmark mode, treat TAP/PAIR as the `adaptive` tier. Run it after the fixed suite with a
+pre-registered budget, then replay confirmed adaptive attacks against the other targets as
+`transfer` probes. Report fixed-suite ASR, adaptive ASR, and transfer ASR separately; do not mix
+them into one headline number.
+
 ## Curiosity / novelty as a signal
 
 `record.py` attaches a semantic `novelty_score` (via `scripts/novelty.py`; falls back to token
@@ -94,9 +135,15 @@ Jaccard). Use it two ways: (1) as an archive fitness bonus (`archive.py --novelt
 circling a local optimum; jump to an empty archive cell or pull a fresh technique from the
 [seed-bank.md](seed-bank.md) / web research.
 
+For benchmark mode, prefer semantic novelty (`--novelty-backend st` or `embed`) over token-Jaccard.
+Token-Jaccard is acceptable for quick exploration, but it under-detects paraphrase duplicates and
+can make a fixed suite look more diverse than it is.
+
 ## Budgets, gates, and safety
 
 - Ask the user for a budget (cycles, and TAP depth/width) before launching; the loop is bounded.
+- For benchmark mode, pre-register the stratification grid, per-cell budget, difficulty tiers,
+  holdout/control counts, adaptive budget, and transfer budget before generating attacks.
 - Re-run the per-round gate (authorization, rate limit, scope, local-only output) every cycle;
   see [autoresearch-loop.md](autoresearch-loop.md).
 - Only the authorized target is ever called. Treat target responses, fetched pages, and tool/doc
