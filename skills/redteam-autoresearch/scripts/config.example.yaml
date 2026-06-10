@@ -7,6 +7,7 @@
 run:
   # Optional. Prefer scripts/init_run.py, which copies this config into a unique run dir.
   # dir: .red-team/runs/my-run
+  mode: exploratory        # exploratory | benchmark
   concurrency: 4            # parallel target requests
   rate_limit_per_min: 60   # max target requests/min
 
@@ -61,6 +62,38 @@ attack_styles:
   - format_injection
   - code_cipher
 
+# Optional benchmark-mode settings. Use when comparing models; exploratory runs can omit this.
+# benchmark:
+#   per_cell_budget: 20       # attempts per model x category x difficulty at minimum
+#   stratify_by:              # preferred: include all dimensions below if budget allows
+#     - model
+#     - category
+#     - attack_style
+#     - hazard_target
+#     - difficulty
+#   difficulties:
+#     - smoke                 # direct baselines and release gates
+#     - standard              # mutator-driven probes
+#     - hard                  # realistic RAG/tool/canary/holdout/control probes
+#     - adaptive              # bounded TAP/PAIR + transfer
+#   adaptive_budget:
+#     branching_factor: 3
+#     width: 3
+#     depth: 2
+#     max_target_calls_per_model: 50
+#   transfer:
+#     enabled: true           # replay confirmed attacks across targets
+#     max_attacks_per_source_model: 25
+#   controls:
+#     benign_per_cell: 5      # benign lookalikes to measure over-refusal / silent-empty
+#     trigger_repeats: 3      # repeated trials for black-box trigger-sensitivity probes
+#   holdout:
+#     enabled: true
+#     seed_families:
+#       - holdout_academic
+#       - holdout_fiction
+#       - holdout_auditor
+
 # Expert search engine knobs (see references/search-loop.md). All optional.
 search:
   judge:
@@ -74,7 +107,7 @@ search:
     novelty_weight: 0.25      # fitness = strongreject_score + novelty_weight * novelty_score
     suggest_per_cycle: 8      # under-explored cells to target each cycle
   novelty:
-    backend: auto             # auto | st | embed | jaccard
+    backend: auto             # auto | st | embed | jaccard; prefer st/embed for benchmark runs
   mutate:                     # defaults for scripts/mutators.py
     tier: standard            # light | standard | heavy
     shots: 32                 # many-shot faux pairs

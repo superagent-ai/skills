@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 CATEGORIES = ["harmful_content", "jailbreak", "prompt_injection", "backdoor"]
 
@@ -82,6 +82,14 @@ def _to_int(value, default: int) -> int:
         return int(round(float(value)))
     except (TypeError, ValueError):
         return default
+
+
+def _to_bool(value) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "y", "on"}
+    return bool(value)
 
 
 def _clamp(value: int, lo: int, hi: int) -> int:
@@ -156,6 +164,8 @@ def normalize_judgment(raw: dict) -> dict:
         "violated_categories": cats,
         "severity": sev,
         "strongreject_score": score,
+        "leak_channel": str(raw.get("leak_channel", "") or "").strip().lower(),
+        "response_mode": str(raw.get("response_mode", "") or "").strip().lower(),
         "judge_rationale": rationale,
     }
 
@@ -220,6 +230,15 @@ class Attempt:
     novelty_score: float
     strongreject_score: float = 0.0
     attack_style: str = ""
+    difficulty: str = ""
+    benchmark_cell: str = ""
+    hazard_target: str = ""
+    seed_family: str = ""
+    holdout: bool = False
+    control_type: str = ""
+    leak_channel: str = ""
+    response_mode: str = ""
+    adaptive_phase: str = ""
     round: int = 1
     cycle: int = 0
     turn: int = 1
@@ -257,6 +276,15 @@ def build_attempt(transcript: dict, judgment: dict, run_id: str, novelty_score: 
         novelty_score=novelty_score,
         strongreject_score=judgment.get("strongreject_score", 0.0),
         attack_style=transcript.get("attack_style", ""),
+        difficulty=str(transcript.get("difficulty", "") or ""),
+        benchmark_cell=str(transcript.get("benchmark_cell", "") or ""),
+        hazard_target=str(transcript.get("hazard_target", "") or ""),
+        seed_family=str(transcript.get("seed_family", "") or ""),
+        holdout=_to_bool(transcript.get("holdout", False)),
+        control_type=str(transcript.get("control_type", "") or ""),
+        leak_channel=str(judgment.get("leak_channel") or transcript.get("leak_channel", "") or ""),
+        response_mode=str(judgment.get("response_mode") or transcript.get("response_mode", "") or ""),
+        adaptive_phase=str(transcript.get("adaptive_phase", "") or ""),
         round=int(transcript.get("round", 1) or 1),
         cycle=int(transcript.get("cycle", 0) or 0),
         turn=int(transcript.get("turn", 1) or 1),
