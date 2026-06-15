@@ -157,6 +157,21 @@ Check this package's postinstall script for Shai-Hulud / credential theft
 </details>
 
 <details>
+<summary><b>security-disclosure-triage</b>: reporter-side advisory verification before disclosure</summary>
+
+Use it when a researcher-side advisory, GHSA, scanner finding, or draft report needs an honest "is this worth disclosing?" decision against a target checkout.
+
+It optimizes against false confirmations and inflated severity. The skill requires the agent to reproduce the implicated construct, trace the real asset guard, build a usable exploit path, check intended behavior and trust boundaries, ground the finding in shipped state, and run an adversary pass before recommending disclosure. It emits both `TRIAGE_REPORT.md` and `triage-result.json` using the reporter-side disposition taxonomy.
+
+```
+Verify this advisory before disclosure
+Triage this scanner finding against the checked-out repository
+Is this GHSA worth disclosing or by-design/operator responsibility?
+```
+
+</details>
+
+<details>
 <summary><b>vulnerability-triage</b>: is this advisory a real finding, by-design, or noise?</summary>
 
 Use it when a GitHub Advisory (GHSA/CVE) lands against a dependency, a bug bounty or HackerOne/Bugcrowd/Intigriti report hits your inbox, or a researcher files an issue — anywhere you need to answer "is this real, by-design, or noise?"
@@ -240,6 +255,7 @@ npx skills add superagent-ai/skills --skill skill-security -a cursor -y
 npx skills add superagent-ai/skills --skill authz-security -a cursor -y
 npx skills add superagent-ai/skills --skill recon-security -a cursor -y
 npx skills add superagent-ai/skills --skill supply-chain-security -a cursor -y
+npx skills add superagent-ai/skills --skill security-disclosure-triage -a cursor -y
 npx skills add superagent-ai/skills --skill vulnerability-triage -a cursor -y
 npx skills add superagent-ai/skills --skill crypto-secrets -a cursor -y
 npx skills add superagent-ai/skills --skill infra-security -a cursor -y
@@ -260,6 +276,7 @@ skills/
   authz-security/         SKILL.md + references/
   recon-security/         SKILL.md + references/
   supply-chain-security/  SKILL.md + references/
+  security-disclosure-triage/ SKILL.md
   vulnerability-triage/   SKILL.md + references/
   crypto-secrets/         SKILL.md + scripts/ (scanner) + references/
   infra-security/         SKILL.md + scripts/ (scanner) + references/
