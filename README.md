@@ -68,6 +68,29 @@ Audit our release workflow for cache poisoning risks
 </details>
 
 <details>
+<summary><b>repo-security-posture</b>: GitHub repository hardening and maintainer-facing security todos</summary>
+
+Use it when you're reviewing or hardening a GitHub repository's security posture — branch protection, CODEOWNERS, GitHub Actions, publish/release integrity, collaborator access, security features, and dependency review.
+
+It collects read-only GitHub configuration and repository files into a JSON inventory, marks admin-gated settings as `not_verified` instead of guessing, then produces a prioritized maintainer todo list grouped by:
+
+- Publish & release integrity
+- Branch & merge protection
+- Sensitive-path ownership
+- CI/CD workflow hardening
+- Account & access control
+- Dependency & supply-chain review
+
+```
+Audit this GitHub repo's security posture: https://github.com/org/repo
+Harden this repo against a compromised maintainer
+Review branch protection, CODEOWNERS, and Actions security for owner/name
+What should we fix first in this repo's GitHub security settings?
+```
+
+</details>
+
+<details>
 <summary><b>skill-security</b>: answer "is this skill safe to install?"</summary>
 
 Use it before you install or trust a skill, plugin, `SKILL.md`, or agent tool — a local folder, a `.zip`/`.skill`, or a cloned repo.
@@ -251,6 +274,7 @@ npx skills add superagent-ai/skills
 npx skills add superagent-ai/skills --skill hacker -a cursor -y
 npx skills add superagent-ai/skills --skill redteam-autoresearch -a cursor -y
 npx skills add superagent-ai/skills --skill ci-cd-security -a cursor -y
+npx skills add superagent-ai/skills --skill repo-security-posture -a cursor -y
 npx skills add superagent-ai/skills --skill skill-security -a cursor -y
 npx skills add superagent-ai/skills --skill authz-security -a cursor -y
 npx skills add superagent-ai/skills --skill recon-security -a cursor -y
@@ -272,6 +296,7 @@ skills/
   hacker/                 SKILL.md + references/ (instruction-only engagement framework)
   redteam-autoresearch/   SKILL.md + references/ + scripts/ (red-team autoresearch harness)
   ci-cd-security/         SKILL.md + references/
+  repo-security-posture/  SKILL.md + references/ + scripts/ (GitHub repo posture collector)
   skill-security/         SKILL.md + scripts/ (scanner) + rules/ (YARA) + references/
   authz-security/         SKILL.md + references/
   recon-security/         SKILL.md + references/
