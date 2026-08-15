@@ -1,6 +1,6 @@
 ---
 name: superagent
-description: Configure and safely use Superagent's remote MCP server for findings, security reports, Contributor Trust, Context Guardrails, and Runtime Guardrails. Use when the user asks to install, connect, configure, troubleshoot, or operate Superagent from Cursor, Claude Code, Codex CLI, or another MCP client.
+description: Configure and safely use Superagent's remote MCP server and webhooks for findings, security reports, Contributor Trust, Context Guardrails, and Runtime Guardrails. Use when the user asks to install, connect, configure, troubleshoot, operate, or set up webhook notifications for Superagent from Cursor, Claude Code, Codex CLI, or another MCP client.
 ---
 
 # Superagent MCP
@@ -109,6 +109,51 @@ result and preserve identifiers the user needs for a follow-up. For
 asynchronous operations, report the returned status or identifier and avoid
 tight polling.
 
+## Webhook setup
+
+Use webhooks when the user wants Superagent events delivered to an agent,
+ticketing system, or remediation workflow. Webhook targets are configured at
+the organization level in
+[Superagent Settings](https://www.superagent.sh/app/settings), not through the
+current MCP tool surface. Do not claim that an MCP call created or changed a
+webhook.
+
+Before setup:
+
+1. Ask which public HTTPS endpoint should receive events and which event types
+   the user needs.
+2. Confirm that the endpoint can preserve the raw request body, return a quick
+   `2xx` response, and move longer work to an asynchronous queue.
+3. Show the proposed target name, URL, and subscriptions. Obtain approval
+   before using browser tools or another authenticated interface to create or
+   modify the organization-wide target.
+
+Guide the user through **Settings** → **Webhooks** → **Add webhook**. Enter the
+approved target name and HTTPS URL, select subscriptions, save, and copy the
+signing secret. The secret is shown only once. Never ask the user to paste it
+into chat, and never place it in source control, command output, logs, or a
+response. Store it in the receiver's secret manager or environment.
+
+Supported subscriptions include:
+
+- `report.started` and `report.finished`
+- `finding.created`, `finding.triage_completed`, and `finding.accepted`
+- `contributor_trust.finished`
+- `agent.finding_created` and `agent.action_blocked`
+
+The receiver must:
+
+- verify `X-Superagent-Signature` with HMAC-SHA256 over
+  `<X-Superagent-Timestamp>.<raw-json-body>` using the signing secret;
+- compare signatures with a timing-safe operation;
+- deduplicate deliveries by `X-Superagent-Event-Id` or the payload `id`;
+- return a `2xx` quickly, because network errors, `408`, `429`, and `5xx`
+  responses are retried.
+
+After saving, send a test event from Settings and verify the signature,
+deduplication, and response path before enabling downstream automation. If the
+secret is exposed, regenerate it immediately and update the receiver.
+
 ## Confirmation gates
 
 Get explicit confirmation immediately before:
@@ -120,6 +165,8 @@ Get explicit confirmation immediately before:
   groups, or rules;
 - changing or restoring a built-in rule mode, because endpoint policy changes
   immediately;
+- creating, changing, disabling, rotating, or deleting an organization webhook
+  target or its event subscriptions;
 - sending a target or content the user has not already authorized for remote
   analysis.
 
@@ -145,6 +192,7 @@ Tool annotations are hints, not a substitute for this gate.
 - [MCP server](https://www.superagent.sh/docs/mcp)
 - [API overview](https://www.superagent.sh/docs/api)
 - [Settings and API keys](https://www.superagent.sh/docs/reference/settings)
+- [Webhooks](https://www.superagent.sh/docs/webhooks)
 - [Findings](https://www.superagent.sh/docs/findings)
 - [Red Team reports](https://www.superagent.sh/docs/red-team)
 - [Context Guardrails](https://www.superagent.sh/docs/context-guardrails)
