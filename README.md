@@ -7,14 +7,15 @@ Each skill ships in the open [Agent Skills](https://agentskills.io/) format and 
 ## Skills
 
 <details>
-<summary><b>superagent</b>: configure and safely operate Superagent over MCP</summary>
+<summary><b>superagent</b>: configure Superagent MCP and signed webhooks safely</summary>
 
-Use it when you want to connect Cursor, Claude Code, Codex CLI, or another MCP client to Superagent, troubleshoot the connection, inspect findings and reports, scan context, check Contributor Trust, or manage Runtime Guardrails.
+Use it when you want to connect Cursor, Claude Code, Codex CLI, or another MCP client to Superagent, set up signed webhook notifications, troubleshoot the connection, inspect findings and reports, scan context, check Contributor Trust, or manage Runtime Guardrails.
 
-This is an explicit, opt-in remote integration. It never connects, sends data, changes MCP configuration, spends organization credits, deletes findings, or changes endpoint policy without the user's request and the required confirmation. API keys stay in environment variables rather than tracked configuration.
+This is an explicit, opt-in remote integration. It never connects, sends data, changes MCP configuration or organization webhooks, spends organization credits, deletes findings, or changes endpoint policy without the user's request and the required confirmation. API keys and webhook signing secrets stay out of tracked configuration.
 
 ```
 Connect Cursor to the Superagent MCP server
+Set up a signed webhook for completed finding triage
 List my unresolved high-risk Superagent findings
 Scan this skill with Superagent Context Guardrails
 Troubleshoot a 401 from the Superagent MCP server
