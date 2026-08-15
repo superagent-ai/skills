@@ -7,6 +7,22 @@ Each skill ships in the open [Agent Skills](https://agentskills.io/) format and 
 ## Skills
 
 <details>
+<summary><b>superagent</b>: configure and safely operate Superagent over MCP</summary>
+
+Use it when you want to connect Cursor, Claude Code, Codex CLI, or another MCP client to Superagent, troubleshoot the connection, inspect findings and reports, scan context, check Contributor Trust, or manage Runtime Guardrails.
+
+This is an explicit, opt-in remote integration. It never connects, sends data, changes MCP configuration, spends organization credits, deletes findings, or changes endpoint policy without the user's request and the required confirmation. API keys stay in environment variables rather than tracked configuration.
+
+```
+Connect Cursor to the Superagent MCP server
+List my unresolved high-risk Superagent findings
+Scan this skill with Superagent Context Guardrails
+Troubleshoot a 401 from the Superagent MCP server
+```
+
+</details>
+
+<details>
 <summary><b>hacker</b>: offensive engagement and exploitability validation</summary>
 
 Use it when you need an authorized offensive workflow for scoped web, network, cloud, mobile, Active Directory, bug bounty, or red-team engagement planning with phase gates, role handoffs, templates, and reports. Use `validate-findings` mode when defensive audits found issues and you need to know which are actually exploitable.
@@ -271,6 +287,7 @@ What's the blast radius if this Terraform is wrong?
 npx skills add superagent-ai/skills
 
 # or pick one
+npx skills add superagent-ai/skills --skill superagent -a cursor -y
 npx skills add superagent-ai/skills --skill hacker -a cursor -y
 npx skills add superagent-ai/skills --skill redteam-autoresearch -a cursor -y
 npx skills add superagent-ai/skills --skill ci-cd-security -a cursor -y
@@ -293,6 +310,7 @@ Once installed, skills load on their own when a task matches — nothing to reme
 
 ```
 skills/
+  superagent/             SKILL.md (opt-in Superagent MCP integration)
   hacker/                 SKILL.md + references/ (instruction-only engagement framework)
   redteam-autoresearch/   SKILL.md + references/ + scripts/ (red-team autoresearch harness)
   ci-cd-security/         SKILL.md + references/
